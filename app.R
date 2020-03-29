@@ -10,7 +10,7 @@
 # Get the data
 
 #source("source script.R")
-load("C:/Users/gargi/Desktop/Progetto Lab/.RData")
+load(url("C:/Users/gargi/Desktop/Progetto Lab/.RData"))
 
 
 # Librerie
