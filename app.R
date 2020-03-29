@@ -10,7 +10,7 @@
 # Get the data
 
 #source("source script.R")
-load(url("C:/Users/gargi/Desktop/Progetto Lab/.RData"))
+load(url("https://drive.google.com/open?id=1qYrpNJpMzBfxYjK3DGYK_KM7ns5xVZ4F"))
 
 
 # Librerie
