@@ -43,7 +43,6 @@ library(DT)
 library(ggplot2)
 library(plotly)
 
-ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
 # Shiny App
 ########
 
