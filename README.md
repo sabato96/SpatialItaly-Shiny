@@ -11,7 +11,6 @@ Lo studio procederà per gradi. In primis verranno analizzati i dati dal punto d
 
 
 
-Puoi trovare il file .RData necessario al funzionamento dell' app.R a questo link.
+Puoi trovare il file .RData necessario al funzionamento dell' app.R a questo link... [...]
 
-https://drive.google.com/open?id=1qYrpNJpMzBfxYjK3DGYK_KM7ns5xVZ4F
 
