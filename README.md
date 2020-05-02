@@ -10,7 +10,9 @@ Questo lavoro si pone l’obiettivo di studiare la distribuzione spaziale delle 
 Lo studio procederà per gradi. In primis verranno analizzati i dati dal punto di vista descrittivo per identificare le propietà statistiche delle variabili considerate e quindi procedere ad una trattazione efficace. Successivamente verranno gettate le basi teoriche dell'analisi spaziale descrivendo minuziosamente il framework utilizzato per l'analisi.
 
 
+Il file .RData necessario al funzionamento dell' "app.R" è scaricabile al seguente link:
 
+https://drive.google.com/file/d/12ri_Wlr0Zu9WNhH7g8zCpID4pb_IH51o/view?usp=sharing
 
 
 
