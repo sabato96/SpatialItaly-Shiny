@@ -31,7 +31,7 @@
   library(rsconnect) #shiny app
   library(shiny)
   library(shinydashboard)
-  ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
+ 
   
 ######
 
