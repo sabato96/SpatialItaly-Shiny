@@ -11,6 +11,7 @@ Lo studio procederà per gradi. In primis verranno analizzati i dati dal punto d
 
 
 Il file .RData necessario al funzionamento dell' "app.R" è scaricabile al seguente link:
+Scaricare tutto il file .zip da Google Drive e poi estrarre il file .RData nella cartella del progetto.
 
 https://drive.google.com/file/d/12ri_Wlr0Zu9WNhH7g8zCpID4pb_IH51o/view?usp=sharing
 
