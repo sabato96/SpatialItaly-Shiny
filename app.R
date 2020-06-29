@@ -43,6 +43,7 @@ library(DT)
 library(ggplot2)
 library(plotly)
 
+ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
 # Shiny App
 ########
 
@@ -82,28 +83,34 @@ ui <- dashboardPage(
       
       tabItem(tabName = "table",
 #####              
-              sidebarLayout(
+
+              fluidPage(
+              
                 #sidebar panel serve a inserire le scelte dell'utente
-                sidebarPanel(
-                  
-                   
+                
+                DTOutput("table", width = "100%"),
+                
+                  fluidRow(
+                    column(6,
+                    
                    selectInput(inputId = "red7",
                                label = "Choose a variable to display",
                                choices = etichette,
-                               selected = ""),
+                               selected = "") ),
                    
+                   column(6,
                    selectInput(inputId = "red8",
                                label = "Choose a variable to display",
                                choices = etichette,
-                               selected = "")
+                               selected = "")),
 
-                ),
+              
+                plotOutput("scatter",width = "100%"),
                 
-               
-                mainPanel(
                   
-                  DTOutput("table", width = "100%", height = 800),
-                  plotOutput("scatter",height = 500)
+                  
+                  
+                
                   
                   
                   
@@ -184,86 +191,100 @@ ui <- dashboardPage(
 #####
       
       tabItem(tabName = "leafletglobal",
-          sidebarLayout(
+          
 #####           
-            sidebarPanel(
-              
+
+fluidPage(
+  
+  #sidebar panel serve a inserire le scelte dell'utente
+  
+  
+  fluidRow(
+    column(3,
+           
+           selectInput(inputId = "red4",
+                       label = "Choose a variable to display",
+                       choices = etichette,
+                       selected = "")),
     
-              selectInput(inputId = "red4",
-                          label = "Choose a variable to display",
-                          choices = etichette,
-                          selected = ""),
-              
-              
-              numericInput(inputId = "g.col1",
-                           label = ("Choose n colors"),
-                           value = "5"),
-              
-              selectInput(inputId = "palette4",
-                          label = "Choose color palette",
-                          choices = list("Blues","BuGn",
-                                         "Greens","Greys",
-                                         "PuBuGn","Dark2"),
-                          selected = "Greys"),
-              
-              actionButton("Run4", "Run code")
-              
-              
-            ),
-            
-            # Show a plot of the generated distribution
-            mainPanel(
-              
-              leafletOutput("qtm", width = "100%", height = 800)
-              
-              
-              
-          ))),
+    column(3,
+           numericInput(inputId = "g.col1",
+                        label = ("Choose n colors"),
+                        value = "5")),
+    column(3,
+           
+           selectInput(inputId = "palette4",
+                       label = "Choose color palette",
+                       choices = list("Blues","BuGn",
+                                      "Greens","Greys",
+                                      "PuBuGn","Dark2"),
+                       selected = "Greys")),
+    
+    column(3,actionButton("Run4", "Run code")),
+    
+    
+    leafletOutput("qtm", width = "100%", height = 800),
+  
+    
+  ))),
 #####  
     
 
       tabItem(tabName = "leafletlocal",
-          sidebarLayout(
 #####           
-          sidebarPanel(
-            
-            selectInput(inputId = "shape1",
-                        label = "Choose a macro to display",
-                        choices = list("Nord",
-                                       "Centro",
-                                       "Sud"),
-                        selected = "Nord"),
-            
-            selectInput(inputId = "red9",
-                        label = "Choose a variable to display",
-                        choices = etichette,
-                        selected = ""),
-            
-            
-            numericInput(inputId = "g.col2",
-                         label = ("Choose n colors"),
-                         value = "5"),
-            
-            selectInput(inputId = "palette9",
-                        label = "Choose color palette",
-                        choices = list("Blues","BuGn",
-                                       "Greens","Greys",
-                                       "PuBuGn","Dark2"),
-                        selected = "Greys"),
-            
-            actionButton("Run9", "Run code")
-            
-            
-          ),
-          
-          # Show a plot of the generated distribution
-          mainPanel(
-            
-            leafletOutput("qtm.local", width = "100%", height = 800)
-            
-            
-            
-          ))),
+fluidPage(
+  
+  #sidebar panel serve a inserire le scelte dell'utente
+  
+  
+  fluidRow(
+    column(2,
+           
+           selectInput(inputId = "shape1",
+                       label = "Choose a macro to display",
+                       choices = list("Nord",
+                                      "Centro",
+                                      "Sud"),
+                       selected = "Nord")),
+    
+    column(2,
+           selectInput(inputId = "red9",
+                       label = "Choose a variable to display",
+                       choices = etichette,
+                       selected = "")),
+    column(2,
+           
+           numericInput(inputId = "g.col2",
+                        label = ("Choose n colors"),
+                        value = "5")),
+    
+    column(2,
+           selectInput(inputId = "palette9",
+                       label = "Choose color palette",
+                       choices = list("Blues","BuGn",
+                                      "Greens","Greys",
+                                      "PuBuGn","Dark2"),
+                       selected = "Greys")),
+    
+    column(2,
+           checkboxInput("all1","All")),
+    
+    column(2,
+           actionButton("Run9", "Run code")),
+           
+    
+    
+    
+    leafletOutput("qtm.local", width = "100%", height = 800),
+    
+    
+    
+    
+    
+    
+    
+    
+  ))),
 #####  
 
 
@@ -362,45 +383,57 @@ server <- function(input, output) {
       x <- input$g.col2
       y <- input$red9
       
-      if(input$shape1 == "Nord"){
+      if(input$shape1 == "Nord" && input$all1==FALSE){
         
         tm <- tm_shape(OGR.com.nord) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
                                                n = input$g.col2, contrast = c(0.28, 0.87),
                                                id = "COMUNE") + 
           
           tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
-          tm_layout(title = paste(y,"medio per provincia"),
+          tm_layout(title = paste(y,"medio per comune"),
                     title.size = 1.1) +
           
           tm_shape(OGR.reg) + tm_borders(col = "black") 
       }
       
-      if(input$shape1 == "Centro"){
+      if(input$shape1 == "Centro" && input$all1==FALSE){
         
         tm <- tm_shape(OGR.com.centro) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
                                                  n = input$g.col2, contrast = c(0.28, 0.87),
                                                  id = "COMUNE") + 
           
           tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
-          tm_layout(title = paste(y,"medio per provincia"),
+          tm_layout(title = paste(y,"medio per comune"),
                     title.size = 1.1) +
           
           tm_shape(OGR.reg) + tm_borders(col = "black") 
       }
       
-      if(input$shape1 == "Sud"){
+      if(input$shape1 == "Sud" && input$all1==FALSE){
         
         tm <- tm_shape(OGR.com.sud) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
                                               n = input$g.col2, contrast = c(0.28, 0.87),
                                               id = "COMUNE") + 
           
           tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
-          tm_layout(title = paste(y,"medio per provincia"),
+          tm_layout(title = paste(y,"medio per comune"),
                     title.size = 1.1) +
           
           tm_shape(OGR.reg) + tm_borders(col = "black") 
       }
       
+      if(input$all1==TRUE){
+        tm <- tm_shape(OGR.com) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
+                                              n = input$g.col2, contrast = c(0.28, 0.87),
+                                              id = "COMUNE") + 
+          
+          tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
+          tm_layout(title = paste(y,"medio per comune"),
+                    title.size = 1.1) +
+          
+          tm_shape(OGR.reg) + tm_borders(col = "black") 
+        
+      }
       
       
       tmap_mode("view")
@@ -596,12 +629,14 @@ server <- function(input, output) {
  
     
     x <- c(input$red7,input$red8)
-    a <- a[s2,x]
+    a <- as.data.frame(a[s2,x])
  
     
     par(mar = c(4, 4, 1, .1))
     
-    plot(a, pch = 21)
+    b <- ggplot(a, aes(a[,1],a[,2]) )
+    b+geom_point()+labs(x=input$red7,y=input$red8) 
+    
    
     
 
@@ -647,8 +682,8 @@ server <- function(input, output) {
       
       p <- ggplot(y, aes(y=y[[xx]], x=y$macro, fill = y$macro)) + 
         geom_violin() + 
-        theme(legend.title=element_text(face="bold")) + xlab("Aree geografiche") +
-        labs(fill="Aree geografiche") + theme(legend.text = element_text( face = "bold")) +
+        theme(legend.title=element_text(face="bold")) + ylab(xx) +
+        xlab("Aree geografiche") + theme(legend.text = element_text( face = "bold")) +
         scale_fill_brewer(palette=input$palette3)
       
       p 
