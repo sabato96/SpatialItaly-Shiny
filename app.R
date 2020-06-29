@@ -53,7 +53,7 @@ ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
 ui <- dashboardPage(
   dashboardHeader(title = "Shiny Project"),
   
-  dashboardSidebar( #Menù laterale con selezioni
+  dashboardSidebar( #menu laterale con selezioni
     sidebarMenu(
       
       menuItem("Introduction", tabName = "intro", icon = icon("dashboard")),
@@ -292,6 +292,26 @@ fluidPage(
             sidebarLayout(
 #####             
                sidebarPanel(
+                 
+                 selectInput(inputId = "method1",
+                             label = "Choose adiacency method",
+                             choices = list("Queen","Distance"),
+                             selected = "Queen"),
+                 
+                 selectInput(inputId = "method2",
+                             label = "Choose matrix method",
+                             choices = list("Binary","Row.standardized","Global.standardized",
+                                            "Variance.reduction"),
+                             selected = "Binary"),
+                 
+                 
+                 sliderInput(inputId = "distance",
+                             label = "Choose distance",
+                             value = 1,
+                             min = 1.5,
+                             max = 5,
+                             step = 0.5),
+                 
              
                  selectInput(inputId = "red5",
                           label = "Choose a variable to display",
@@ -314,6 +334,25 @@ fluidPage(
             sidebarLayout(
 #####              
               sidebarPanel(
+                
+                selectInput(inputId = "method3",
+                            label = "Choose adiacency method",
+                            choices = list("Queen","Distance"),
+                            selected = "Queen"),
+                
+                selectInput(inputId = "method4",
+                            label = "Choose matrix method",
+                            choices = list("Binary","Row.standardized","Global.standardized",
+                                           "Variance.reduction"),
+                            selected = "Binary"),
+                
+                
+                sliderInput(inputId = "distance1",
+                            label = "Choose distance",
+                            value = 1,
+                            min = 1.5,
+                            max = 5,
+                            step = 0.5),
                 
                 selectInput(inputId = "red6",
                             label = "Choose a variable to display",
@@ -470,8 +509,55 @@ server <- function(input, output) {
         return()
       isolate({
       
-    
-            
+        #Scelta criterio adiacenze
+        
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method1 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
+
+        
+        
+        
+        
+        
+        ###
+                
              n <- length(OGR.prov)
              z <- input$red5
              y <- OGR.prov@data[[z]]
@@ -501,7 +587,59 @@ server <- function(input, output) {
       if(input$Run5 == 0)
         return()
       isolate({
-      
+     
+        
+        
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method1 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+        
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+         
       n <- length(OGR.prov)
       z <- input$red5
       y <- OGR.prov@data[[z]]
@@ -543,6 +681,51 @@ server <- function(input, output) {
         return()
       isolate({
         
+        
+        #Scelta criterio adiacenze
+        
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method3 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+        
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
+        
+        
+        
  
              z <- input$red6
              zz <- input$n.sim
@@ -576,6 +759,51 @@ server <- function(input, output) {
       if(input$Run6 == 0)
         return()
       isolate({
+        
+        #Scelta criterio adiacenze
+        
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method3 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+        
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
+        
+        
+        
         
         
         z <- input$red6

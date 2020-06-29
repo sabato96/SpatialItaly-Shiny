@@ -46,6 +46,9 @@ library(DT)
 library(ggplot2)
 library(plotly)
 
+
+ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
+
 ```
 
 # Introduzione
@@ -325,7 +328,7 @@ server = function(input,output) {
 
 Per procedere all’analisi spaziale vera e propria bisogna definire un framework per posizionare nello spazio le unità amministrative oggetto dell’analisi. Al fine di definire nel modo più accurato possibile le unità spaziali dei comuni e delle varie regioni amministrative italiane sono stati utilizzati gli shapefile presenti sul sito [ISTAT](https://www.istat.it/it/archivio/222527) con riguardo a quelli dell’anno 2016, che corrisponde all’anno di censimento del dataset. 
 
-Queste strutture dati sono in formato WGS84, facilmente richiamabili in R grazie alla funzione readOGR presente nel pacchetto rgdal.
+Queste strutture dati sono in formato WGS84, facilmente caricabili in R grazie alla funzione readOGR presente nel pacchetto rgdal.
 In questo modo abbiamo ottenuto i poligoni di regioni, province e comuni italiani. Qui un piccolo esempio.
 
 <br><br>
@@ -340,7 +343,7 @@ plot(OGR.prov, col = "gray", border = "blue") # Disegna shapefile vuoto
 <br>
 Nel caso sopra riportato  i poligoni rappresentano la forma e la superficie di regioni e province italiane. Utilizzando la stessa procedura e i dati forniti dall’ISTAT sono stati importati in R anche gli shapefile per i comuni.
 
-Una volta importati gli shapefile per comuni province e regioni è stato possibile inserire i dati utilizzando la funzione merge di R prendendo come riferimento la denominazione delle unità amministrative. In questo modo l’oggetto SpatialPolygonsDataFrame (S4 class) conterrà sia le informazioni spaziali sia i dati sui redditi per ogni poligono considerato. E’ necessario precisare, infine, che nel caso di regioni e province i dati comunali sono stati raggruppati per provincia o regione. Il valore del reddito per provincia (regione) sarà quindi uguale alla media del reddito dei comuni comuni presenti nella provincia (regione) . 
+Una volta importati gli shapefile per comuni, province e regioni è stato possibile inserire i dati utilizzando la funzione merge di R prendendo come riferimento la denominazione delle unità amministrative. In questo modo l’oggetto SpatialPolygonsDataFrame (S4 class) conterrà sia le informazioni spaziali sia i dati sui redditi per ogni poligono considerato. E’ necessario precisare, infine, che nel caso di regioni e province i dati comunali sono stati raggruppati per provincia o regione. Il valore del reddito per provincia (regione) sarà quindi uguale alla media del reddito dei comuni comuni presenti nella provincia (regione) . 
 
 Nell'app seguente è possibile osservare i dati per provincia (leaflet global) e quelli per comune (leaflet local). Per quanto riguarda la visualizzazione dei comuni, è possibile scegliere quale macroregione italiana visualizzare, questo poichè il caricamento dei comuni su tutto il territorio nazionale sarebbe stato computazionalmente oneroso e avrebbe richiesto molto tempo per il rendering.
 
@@ -363,96 +366,109 @@ shinyApp(
         dashboardBody(
           tabItems(
               
-            tabItem(tabName = "leafletglobal",
-              
-              sidebarLayout(
-#####           
-                sidebarPanel(
-              
-    
-                   selectInput(inputId = "red4",
-                               label = "Choose a variable to display",
-                               choices = etichette,
-                               selected = ""),
-              
-              
-                    numericInput(inputId = "g.col1",
-                                 label = ("Choose n colors"),
-                                 value = "5"),
-              
-                    selectInput(inputId = "palette4",
-                                label = "Choose color palette",
-                                choices = list("Blues","BuGn",
-                                              "Greens","Greys",
-                                              "PuBuGn","Dark2"),
-                                selected = "Greys"),
-              
-                    actionButton("Run4", "Run code")
-              
-              
-            ),
-            
-            # Show a plot of the generated distribution
-            mainPanel(
-              
-              leafletOutput("qtm", width = "100%", height = 800)
-              
-              
-              
-          ))),
-#####  
-                 
-            tabItem(tabName = "leafletlocal",
-        
-              sidebarLayout(
-#####           
-                sidebarPanel(
-            
-                  selectInput(inputId = "shape1",
-                              label = "Choose a macro to display",
-                              choices = list("Nord",
-                                             "Centro",
-                                             "Sud"),
-                              selected = "Nord"),
-            
-                  selectInput(inputId = "red9",
-                              label = "Choose a variable to display",
-                              choices = etichette,
-                              selected = ""),
-            
-            
-                  numericInput(inputId = "g.col2",
-                               label = ("Choose n colors"),
-                               value = "5"),
-            
-                  selectInput(inputId = "palette9",
-                              label = "Choose color palette",
-                              choices = list("Blues","BuGn",
-                                             "Greens","Greys",
-                                             "PuBuGn","Dark2"),
-                              selected = "Greys"),
-            
-                  actionButton("Run9", "Run code")
-            
-            
-          ),
+      
+      tabItem(tabName = "leafletglobal",
           
-          # Show a plot of the generated distribution
-          mainPanel(
-            
-            leafletOutput("qtm.local", width = "100%", height = 800)
-            
-            
-            
-          )))
-))),
+#####           
+
+fluidPage(
+  
+  #sidebar panel serve a inserire le scelte dell'utente
+  
+  
+  fluidRow(
+    column(3,
+           
+           selectInput(inputId = "red4",
+                       label = "Choose a variable to display",
+                       choices = etichette,
+                       selected = "")),
+    
+    column(3,
+           numericInput(inputId = "g.col1",
+                        label = ("Choose n colors"),
+                        value = "5")),
+    column(3,
+           
+           selectInput(inputId = "palette4",
+                       label = "Choose color palette",
+                       choices = list("Blues","BuGn",
+                                      "Greens","Greys",
+                                      "PuBuGn","Dark2"),
+                       selected = "Greys")),
+    
+    column(3,actionButton("Run4", "Run code")),
+    
+    
+    leafletOutput("qtm", width = "100%", height = 800),
+  
+    
+  ))),
+#####  
+
+      tabItem(tabName = "leafletlocal",
+#####           
+fluidPage(
+  
+  #sidebar panel serve a inserire le scelte dell'utente
+  
+  
+  fluidRow(
+    column(2,
+           
+           selectInput(inputId = "shape1",
+                       label = "Choose a macro to display",
+                       choices = list("Nord",
+                                      "Centro",
+                                      "Sud"),
+                       selected = "Nord")),
+    
+    column(2,
+           selectInput(inputId = "red9",
+                       label = "Choose a variable to display",
+                       choices = etichette,
+                       selected = "")),
+    column(2,
+           
+           numericInput(inputId = "g.col2",
+                        label = ("Choose n colors"),
+                        value = "5")),
+    
+    column(2,
+           selectInput(inputId = "palette9",
+                       label = "Choose color palette",
+                       choices = list("Blues","BuGn",
+                                      "Greens","Greys",
+                                      "PuBuGn","Dark2"),
+                       selected = "Greys")),
+    
+    column(2,
+           checkboxInput("all1","All")),
+    
+    column(2,
+           actionButton("Run9", "Run code")),
+           
+    
+    
+    
+    leafletOutput("qtm.local", width = "100%", height = 800),
+    
+    
+    
+    
+    
+    
+    
+    
+  )))))),
 #####  
 
                   
         
 server <- function(input,output) {
           
-    
+  
+ 
   output$qtm <- renderLeaflet({
     
     if(input$Run4 == 0)
@@ -478,6 +494,7 @@ server <- function(input,output) {
       
     }) })
   
+  
   output$qtm.local <- renderLeaflet({
     
     if(input$Run9 == 0)
@@ -488,59 +505,70 @@ server <- function(input,output) {
       x <- input$g.col2
       y <- input$red9
       
-      if(input$shape1 == "Nord"){
-      
-      tm <- tm_shape(OGR.com.nord) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
-                                         n = input$g.col2, contrast = c(0.28, 0.87),
-                                         id = "COMUNE") + 
+      if(input$shape1 == "Nord" && input$all1==FALSE){
         
-        tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
-        tm_layout(title = paste(y,"medio per provincia"),
-                  title.size = 1.1) +
-        
-        tm_shape(OGR.reg) + tm_borders(col = "black") 
+        tm <- tm_shape(OGR.com.nord) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
+                                               n = input$g.col2, contrast = c(0.28, 0.87),
+                                               id = "COMUNE") + 
+          
+          tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
+          tm_layout(title = paste(y,"medio per comune"),
+                    title.size = 1.1) +
+          
+          tm_shape(OGR.reg) + tm_borders(col = "black") 
       }
       
-      if(input$shape1 == "Centro"){
+      if(input$shape1 == "Centro" && input$all1==FALSE){
         
         tm <- tm_shape(OGR.com.centro) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
-                                               n = input$g.col2, contrast = c(0.28, 0.87),
-                                               id = "COMUNE") + 
+                                                 n = input$g.col2, contrast = c(0.28, 0.87),
+                                                 id = "COMUNE") + 
           
           tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
-          tm_layout(title = paste(y,"medio per provincia"),
+          tm_layout(title = paste(y,"medio per comune"),
                     title.size = 1.1) +
           
           tm_shape(OGR.reg) + tm_borders(col = "black") 
       }
       
-      if(input$shape1 == "Sud"){
+      if(input$shape1 == "Sud" && input$all1==FALSE){
         
         tm <- tm_shape(OGR.com.sud) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
-                                               n = input$g.col2, contrast = c(0.28, 0.87),
-                                               id = "COMUNE") + 
+                                              n = input$g.col2, contrast = c(0.28, 0.87),
+                                              id = "COMUNE") + 
           
           tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
-          tm_layout(title = paste(y,"medio per provincia"),
+          tm_layout(title = paste(y,"medio per comune"),
                     title.size = 1.1) +
           
           tm_shape(OGR.reg) + tm_borders(col = "black") 
       }
       
+      if(input$all1==TRUE){
+        tm <- tm_shape(OGR.com) + tm_fill(input$red9, palette = input$palette9, style = "quantile", 
+                                              n = input$g.col2, contrast = c(0.28, 0.87),
+                                              id = "COMUNE") + 
+          
+          tm_borders(alpha=.7) + tm_legend(legend.position = c("left", "bottom")) +
+          tm_layout(title = paste(y,"medio per comune"),
+                    title.size = 1.1) +
+          
+          tm_shape(OGR.reg) + tm_borders(col = "black") 
+        
+      }
       
       
       tmap_mode("view")
       
       tmap_leaflet(tm) 
       
-    }) })
+    }) }) }
+        
+,options = list(height = 850))
+  
     
 
-    } ,
-  
-  options = list(height = 800)
-  
-)
+
 
 
 ```
@@ -554,7 +582,7 @@ Per autocorrelazione spaziale si intende quel fenomeno per cui nell’analisi sp
 Oltretutto la prima legge della geografia, (Tobler 1970) dice che:
 
 <br>
->“Ogni cosa è correlata a qualsiasi altra, ma le cose vicine sono più relazionate di quelle lontane”
+> “Ogni cosa è correlata a qualsiasi altra, ma le cose vicine sono più relazionate di quelle lontane”
 
 <br>
 
@@ -570,8 +598,8 @@ E’ bene ricordare che  l’autocorrelazione spaziale è stata sviluppata prend
 
 ### Struttura spaziale
 
-Il primo passo in questo tipo di analisi è definire un metodo che ci permetta di incorporare la prossimità spaziale in una misura di autocorrelazione; A tal fine bisognerà catturare la relazione spaziale di ogni località e per fare ciò utilizzeremo una matrice di pesi spaziale W.
-Nella prima riga di questa matrice troviamo l’informazione riguardante la prima località e tutte le altre. Formalmente ogni elemento della matrice W, definito come $w_{ij}$ rappresenterà la relazione tra la località i e la località j. Pertanto avremo:
+Il primo passo in questo tipo di analisi è definire un metodo che ci permetta di incorporare la prossimità spaziale in una misura di autocorrelazione; A tal fine bisognerà catturare la relazione spaziale di ogni località e per fare ciò utilizzeremo una matrice di pesi spaziale $\textbf{W}$.
+Nella prima riga di questa matrice troviamo l’informazione riguardante la prima località e tutte le altre. Formalmente ogni elemento della matrice $\textbf{W}$, definito come $w_{ij}$ rappresenterà la relazione tra la località i e la località j. Pertanto avremo:
 
 
 $$
@@ -588,16 +616,16 @@ Ogni valore della matrice è dipendente dalla relazione spaziale che lega le due
 
 Considerato il framework bisogna assegnare un valore alle variabili $w_{ij}$.
 
-L’approccio più semplice è quello dell’adiacenza. Con tale approccio assegneremo valore 1 se le due località sono adiacenti e valore 0 se non lo sono. Sebbene questo approccio sembri semplice esistono alcune varianti. Ad esempio potremmo considerare due poligoni come adiacenti se hanno un confine in comune ( Rook’s case ), o potremmo considerare sufficiente il fatto che i due poligoni condividano anche un solo vertice ( Queen’s case ).
+L’approccio più semplice è quello dell’adiacenza. Con tale approccio assegneremo valore 1 se le due località sono adiacenti e valore 0 se non lo sono. Sebbene questo approccio sembri semplice esistono alcune varianti. Ad esempio potremmo considerare due poligoni come adiacenti se hanno un confine in comune (Rook’s case), o potremmo considerare sufficiente il fatto che i due poligoni condividano anche un solo vertice (Queen’s case).
 
 
 Un’ altro approccio potrebbe essere quello di ignorare i confini dei poligoni e utilizzare una misura basata sulla distanza tra i centroidi dei poligoni. Basandoci su questo framework, dopo aver costruito la matrice delle distanze tra i centroidi potremmo definire una quantità arbitraria d e di conseguenza considerare adiacenti solo i poligoni le cui distanze sono minori del valore d.
 
-Potremmo correttamente supporre, quindi, che la struttura della matrice $\textbf{W}$ descrive in pieno l'informazione sulla struttura spaziale. In letteratura molti studi sono stati proposti per descrivere le propietà di questa matrice, in particolare [@10.2307/621721] ha analizzato autovalori e autovettori di questa matrice identificando in questi ultimi l'informazione sulla struttura spaziale dei dati. In particolare gli autovalori della matrice forniscono una misura globale del livello di interconnessione del network, mentre gli autovettori indicano la centralità delle località rispetto all'intero sistema.  
+Potremmo correttamente supporre, quindi, che la struttura della matrice $\textbf{W}$ descrive pienamente l'informazione sulla struttura spaziale. In letteratura molti studi sono stati proposti per descrivere le propietà di questa matrice, in particolare [@10.2307/621721] ha analizzato autovalori e autovettori di questa matrice identificando in questi ultimi l'informazione sulla struttura spaziale dei dati. In particolare gli autovalori della matrice forniscono una misura globale del livello di interconnessione del network, mentre gli autovettori indicano la centralità delle località rispetto all'intero sistema.  
 
 
 Sebbene siano stati sviluppati molti metodi complessi per il problema di cui sopra ci limiteremo ad utilizzare i più semplici che verranno formalmente introdotti nel seguito.
-Una considerazione importante da fare prima di procedere oltre riguarda la simmetria della matrice W. Saremmo portati a pensare che la matrice debba necessariamente essere simmetrica, e in linea di principio è così. Purtroppo alcuni dei metodi sviluppati per costruire questa matrice non garantiscono la simmetria. Possiamo forzare la matrice ad essere simmetrica mediante questa trasformazione:
+Una considerazione importante da fare prima di procedere oltre riguarda la simmetria della matrice $\textbf{W}$. Saremmo portati a pensare che la matrice debba necessariamente essere simmetrica, e in linea di principio è così. Purtroppo alcuni dei metodi sviluppati per costruire questa matrice non garantiscono la simmetria. Possiamo forzare la matrice ad essere simmetrica mediante questa trasformazione:
 
 $$
 \begin{equation}
@@ -690,8 +718,11 @@ shinyApp(
         
         #Metodo distance based
         if (input$method == "Distance"){
+          
         dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  row.names =    OGR.prov.sub@data$seq)
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+       
         }
         
         ## Plot adiacenze
@@ -740,17 +771,17 @@ La parte importante del calcolo è la seconda frazione. Il numeratore di questa 
 
 $$
 \begin{equation}
-\sum_{i=1}^{n}\sum_{j=1}^{n}w_{ij}(y_{i}-\bar{y})(y_{j}-\bar{y})   
+\sum_{i=1}^{n}\sum_{j=1}^{n}w_{ij}(y_{i}-\bar{y})(y_{j}-\bar{y})
 \end{equation}
 $$
 
 
-che si dovrebbe riconoscere come un termine di covarianza. I pedici $i,j$ si riferiscono a diverse unità spaziali e y è il valore dei dati in ciascuna unità spaziale. Calcolando il prodotto delle differenze dalla media complessiva $\bar{y}$, determiniamo la misura in cui esse covariano. Se sia $y_{j}$ che $y_{i}$ si trovano sullo stesso lato della media (sopra o sotto di esso), allora questo prodotto è positivo; se uno è al di sopra della media e l'altro sotto, allora il prodotto è negativo e la dimensione assoluta del totale risultante dipenderà da quanto i valori sono vicini alla media complessiva.
+che si dovrebbe riconoscere come un termine di covarianza. I pedici $i,j$ si riferiscono a diverse unità spaziali e $y$ è il valore dei dati in ciascuna unità spaziale. Calcolando il prodotto delle differenze dalla media complessiva $\bar{y}$, determiniamo la misura in cui esse covariano. Se sia $y_{j}$ che $y_{i}$ si trovano sullo stesso lato della media (sopra o sotto di esso), allora questo prodotto è positivo; se uno è al di sopra della media e l'altro sotto, allora il prodotto è negativo e la dimensione assoluta del totale risultante dipenderà da quanto i valori sono vicini alla media complessiva.
 I termini di covarianza sono moltiplicati per $w_{ij}$, cioè il corrispondente elemento della matrice dei pesi spaziali $\textbf{W}$, in questo modo gli elementi di covarianza sono ponderati in base alla loro relazione spaziale. Quando $\textbf{W}$ è una matrice binaria allora:
 
-* Se le unità spaziali non sono adiacenti  $\Rightarrow w_{ij} = 0$
+* Se le unità $i,j$ non sono adiacenti  $\Rightarrow w_{ij} = 0$
 
-* Se le unità spaziali sono adiacenti  $\Rightarrow w_{ij} = 1$
+* Se le unità $i,j$ sono adiacenti  $\Rightarrow w_{ij} = 1$
 
 In questo modo solamente i termini di covarianza relativi a due località adiacenti saranno inclusi nel calcolo.
 
@@ -777,7 +808,7 @@ Per valutare la significatività statistica del valore ricavato verrà costruito
 
 ### Moran's scatterplot
 
-Questo è un diagramma a dispersione Moran che mostra la relazione tra i valori degli attributi stessi (asse orizzontale) e il valore dell'attributo medio locale (ovvero il valore medio delle posizioni adiacenti). Questo grafico ha quattro regioni: il quadrante in basso a sinistra contiene casi in cui il valore dell'attributo in ciascun poligono e il valore dell'attributo medio dei poligoni vicini sono inferiori alla media globale; il quadrante in alto a destra contiene casi in cui sia il valore dell'attributo che la media locale sono maggiori della media globale; e gli altri due quadranti contengono casi in cui il valore dell'attributo e la media locale si trovano su lati opposti della media globale. Le posizioni che si trovano nei quadranti in basso a sinistra e in alto a destra sono quelle che contribuiscono all'autocorrelazione positiva complessiva, poiché hanno un valore di attributo simile a quello dei loro vicini, mentre le posizioni negli altri due quadranti contribuiscono a un'autocorrelazione negativa. Se la maggior parte delle posizioni si trova nei quadranti in basso a sinistra e in alto a destra, allora il risultato sarà probabilmente il valore positivo dell'I di Moran, indicando un'autocorrelazione positiva.
+Questo è un diagramma a dispersione Moran che mostra la relazione tra i valori degli attributi stessi (asse orizzontale) e il valore dell'attributo medio locale (ovvero il valore medio delle posizioni adiacenti). Questo grafico ha quattro regioni: il quadrante in basso a sinistra contiene casi in cui il valore dell'attributo in ciascun poligono e il valore dell'attributo medio dei poligoni vicini sono inferiori alla media globale; il quadrante in alto a destra contiene casi in cui sia il valore dell'attributo che la media locale sono maggiori della media globale; e gli altri due quadranti contengono casi in cui il valore dell'attributo e la media locale si trovano su lati opposti della media globale. Le posizioni che si trovano nei quadranti in basso a sinistra e in alto a destra sono quelle che contribuiscono all'autocorrelazione positiva complessiva, poiché hanno un valore di attributo simile a quello dei loro vicini, mentre le posizioni negli altri due quadranti contribuiscono a un'autocorrelazione negativa. Se la maggior parte delle posizioni si trova nei quadranti in basso a sinistra e in alto a destra, allora il risultato sarà probabilmente un valore positivo dell'I di Moran, cioè un'autocorrelazione positiva.
 
 
 ```{r}
@@ -954,8 +985,9 @@ $$
 $$
 
 
-ove y è il vettore della colonna le cui voci sono ciascuna (y i – y).
-Questa intuizione consente di utilizzare le statistiche diagnostiche standard della regressione lineare per associare i p-value ai valori osservati di I di Moran. Tuttavia, poiché la struttura spaziale della mappa è anche un parametro nell'analisi, un approccio più usuale si basa su una procedura Monte Carlo. I valori degli attributi di posizione possono essere permutati per qualsiasi numero richiesto di volte (999 è tipico), ovvero i valori degli attributi osservati nella mappa vengono assegnati in modo casuale alle posizioni della mappa e l'I di Moran viene ricalcolato ogni volta per la mappa '' criptata ''. Ciò fornisce una distribuzione empirica di campionamento per l'indice e consente all'I Moran osservato di essere valutato in termini di inusualità rispetto a questo benchmark randomizzato.
+ove y è il vettore della colonna le cui voci sono ciascuna (y i – y) $(y_i - y)$.
+Questa intuizione consente di utilizzare le statistiche diagnostiche standard della regressione lineare per associare i p-value ai valori osservati di I di Moran. Tuttavia, poiché la struttura spaziale della mappa è anche un parametro nell'analisi, un approccio più usuale si basa su una procedura Monte Carlo.
+I valori degli attributi di posizione possono essere permutati per qualsiasi numero richiesto di volte , ovvero i valori degli attributi osservati nella mappa vengono assegnati in modo casuale alle posizioni della mappa e l'I di Moran viene ricalcolato ogni volta per la mappa generata dall'assegnazione casuale. Ciò fornisce una distribuzione empirica di campionamento per l'indice e consente all'I Moran osservato di essere valutato in termini di inusualità rispetto a questo benchmark randomizzato.
 
 
 
@@ -1060,7 +1092,7 @@ Moran.boot <- function(shape,x,wm,n.sim){
       
       w.per <- wm[sample(nrow(wm)),sample(ncol(wm))]
       
-      Morans[i] <- Moran.fun(shape,x,w.per)[[1]] # calcola n.sim volte l'I moran sulla matrice permutata
+      Morans[i] <- Moran.fun(shape,x,w.per)[[1]] 
       
     }
     
