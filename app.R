@@ -953,7 +953,7 @@ server <- function(input, output) {
     
     
     
-    # empty bar è una barra vuota che aggiunge spazio tra ogni gruppo
+    # empty bar e' una barra vuota che aggiunge spazio tra ogni gruppo
     empty_bar <- 4
     to_add <- data.frame( matrix(NA, empty_bar*nlevels(dat.$group), ncol(dat.)) )
     colnames(to_add) <- colnames(dat.)
@@ -998,7 +998,7 @@ server <- function(input, output) {
       geom_segment(data=grid_data, aes(x = end, y = lev[2], xend = start, yend = lev[2]), colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
       geom_segment(data=grid_data, aes(x = end, y = lev[1], xend = start, yend = lev[1]), colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
       
-      annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="grey", size=5 , angle=0, fontface="bold", hjust=1) +
+      annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="black", size=5 , angle=0, fontface="bold", hjust=1) +
       
       geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.6) +
       

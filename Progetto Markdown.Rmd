@@ -3,7 +3,7 @@ title: "Progetto Markdown"
 runtime: shiny
 output: 
   html_document:
-     theme: journal
+     theme: readable
      code_folding: hide
      number_sections: true
      toc: true
@@ -17,7 +17,7 @@ link-citations: yes
 ---
 <style>
 body .main-container {
-max-width: 1350px;
+max-width: 1650px;
 }
 </style>
 
@@ -619,7 +619,7 @@ Considerato il framework bisogna assegnare un valore alle variabili $w_{ij}$.
 L’approccio più semplice è quello dell’adiacenza. Con tale approccio assegneremo valore 1 se le due località sono adiacenti e valore 0 se non lo sono. Sebbene questo approccio sembri semplice esistono alcune varianti. Ad esempio potremmo considerare due poligoni come adiacenti se hanno un confine in comune (Rook’s case), o potremmo considerare sufficiente il fatto che i due poligoni condividano anche un solo vertice (Queen’s case).
 
 
-Un’ altro approccio potrebbe essere quello di ignorare i confini dei poligoni e utilizzare una misura basata sulla distanza tra i centroidi dei poligoni. Basandoci su questo framework, dopo aver costruito la matrice delle distanze tra i centroidi potremmo definire una quantità arbitraria d e di conseguenza considerare adiacenti solo i poligoni le cui distanze sono minori del valore d.
+Un altro approccio potrebbe essere quello di ignorare i confini dei poligoni e utilizzare una misura basata sulla distanza tra i centroidi dei poligoni. Basandoci su questo framework, dopo aver costruito la matrice delle distanze tra i centroidi potremmo definire una quantità arbitraria d e di conseguenza considerare adiacenti solo i poligoni le cui distanze sono minori del valore d.
 
 Potremmo correttamente supporre, quindi, che la struttura della matrice $\textbf{W}$ descrive pienamente l'informazione sulla struttura spaziale. In letteratura molti studi sono stati proposti per descrivere le propietà di questa matrice, in particolare [@10.2307/621721] ha analizzato autovalori e autovettori di questa matrice identificando in questi ultimi l'informazione sulla struttura spaziale dei dati. In particolare gli autovalori della matrice forniscono una misura globale del livello di interconnessione del network, mentre gli autovettori indicano la centralità delle località rispetto all'intero sistema.  
 
@@ -888,6 +888,25 @@ ui <- fluidPage(
     # Sidebar panel per input ----
     sidebarPanel(
       
+                        selectInput(inputId = "method1",
+                             label = "Choose adiacency method",
+                             choices = list("Queen","Distance"),
+                             selected = "Queen"),
+                 
+                        selectInput(inputId = "method2",
+                             label = "Choose matrix method",
+                             choices = list("Binary","Row.standardized","Global.standardized",
+                                            "Variance.reduction"),
+                             selected = "Binary"),
+                 
+                 
+                        sliderInput(inputId = "distance",
+                             label = "Choose distance",
+                             value = 1,
+                             min = 1.5,
+                             max = 5,
+                             step = 0.5),
+                        
                         selectInput(inputId = "red5",
                               label = "Choose a variable to display",
                               choices = etichette,
@@ -917,6 +936,50 @@ ui <- fluidPage(
         return()
       isolate({
       
+        
+        
+           
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method1 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
+
+        
              n <- length(OGR.prov)
              z <- input$red5
              y <- OGR.prov@data[[z]]
@@ -947,7 +1010,48 @@ ui <- fluidPage(
       if(input$Run5 == 0)
         return()
       isolate({
-      
+         
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method1 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
+
+        
       n <- length(OGR.prov)
       z <- input$red5
       y <- OGR.prov@data[[z]]
@@ -992,6 +1096,27 @@ I valori degli attributi di posizione possono essere permutati per qualsiasi num
 
 
 ## Bootstrapping Moran's 
+
+Per valutare la singificatività dei risultati ottenuti in precedenza utilizzeremo un test "Permutation Bootstrap".
+
+Dato un sistema di ipotesi:
+
+$$
+\begin{cases} H_0: Distribuzione \ random \ dei \ dati  \\ 
+H_1: Distribuzione \ dipende \ dalle \ unità \ adiacenti  \end{cases}
+$$
+
+Per trovare la distribuzione di qualsiasi misura di autocorrelazione spaziale bisognerebbe calcolare tale misura per ogni possibile combinazione spaziale dei dati.
+Tale ri-assegnazione dei valori è chiamata permutazione. Date n unità spaziali, il numero di permutazioni possibili è:
+
+$$
+n!=n\ (n-1)\ (n-2)\ ...\ (2)\ (1)
+$$
+
+E' chiaro che non è possibile valutare tutte le permutazioni poichè per un n sufficientemente elevato le possibili permutazioni aumentano a dismisura. Pertanto estrarremo in modo casuale da tutte le possibili permutazioni un numero sufficientemente elevato. 
+La distribuzione dell' I di Moran per un campione sufficientemente elevato di permutazioni è considerata una stima affidabile della vera distribuzione della statistica considerata.
+
+
 
 $$
 \begin{equation}
@@ -1113,7 +1238,8 @@ Moran.boot <- function(shape,x,wm,n.sim){
       "N.sim" = n.sim,
       "Simulated" = as.vector(Morans),
       "z-score" = ZS,
-      "p.value" = p.value))
+      "p.value" = p.value,
+      "sample"= Morans))
     
   }
 
@@ -1170,7 +1296,24 @@ ui <- fluidPage(
 
     # Sidebar panel per input ----
     sidebarPanel(
-      
+                selectInput(inputId = "method3",
+                            label = "Choose adiacency method",
+                            choices = list("Queen","Distance"),
+                            selected = "Queen"),
+                
+                selectInput(inputId = "method4",
+                            label = "Choose matrix method",
+                            choices = list("Binary","Row.standardized","Global.standardized",
+                                           "Variance.reduction"),
+                            selected = "Binary"),
+                
+                
+                sliderInput(inputId = "distance1",
+                            label = "Choose distance",
+                            value = 1,
+                            min = 1.5,
+                            max = 5,
+                            step = 0.5),
                 selectInput(inputId = "red6",
                             label = "Choose a variable to display",
                             choices = etichette,
@@ -1205,7 +1348,49 @@ ui <- fluidPage(
         return()
       isolate({
         
- 
+         
+        
+        #Scelta criterio adiacenze
+        
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method3 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+        
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
              z <- input$red6
              zz <- input$n.sim
              
@@ -1239,7 +1424,49 @@ ui <- fluidPage(
         return()
       isolate({
         
+                
         
+        #Scelta criterio adiacenze
+        
+        OGR.prov.sub <- OGR.prov[]
+        OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+        xy.sub <- coordinates(OGR.prov.sub)
+        
+        ### Adicenze
+        
+        #Metodo semplice QUEEN
+        
+        
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        
+        
+        
+        #Metodo distance based
+        if (input$method3 == "Distance"){
+          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          
+        }
+        
+        # Scelta dei pesi: binaria o pesata con distanze
+        # B = Binary
+        # W = Row standardized
+        # C= Globally standardized
+        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
+        
+        
+        ty <- list(Binary="B",
+                   Row.standardized="W",
+                   Global.standardized="C",
+                   Variance.reduction="S")
+        
+        
+        
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
         z <- input$red6
         zz <- input$n.sim
         
