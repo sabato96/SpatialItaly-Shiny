@@ -108,10 +108,10 @@ ui <- dashboardPage(
 
               
                 mainPanel ( column(6, 
-                  plotOutput("scatter",width = "100%")),
+                  plotlyOutput("scatter",width = "100%")),
                   column(5,
                 
-                plotOutput("barplot", width = "100%"),offset = 1), width= 12)
+                plotlyOutput("barplot", width = "100%"),offset = 1), width= 12)
                
                  
                   
@@ -912,7 +912,7 @@ server <- function(input, output) {
       
       }) 
     
-  output$scatter <- renderPlot({
+  output$scatter <- renderPlotly({
     
     
     a <- red.fin %>% mutate_if(is.numeric, ~round(.,3))
@@ -921,20 +921,21 @@ server <- function(input, output) {
     s2 = input$table_rows_all
  
     
-    x <- c(input$red7,input$red8)
-    a <- as.data.frame(a[s2,x])
- 
+    xx <- c("Denominazione.Comune",input$red7,input$red8)
+    aa <- as.data.frame(a[s2,xx])
+    
     
    # par(mar = c(4, 4, 1, .1))
     
-    b <- ggplot(a, aes(a[,1],a[,2]) )
-    b+geom_point()+labs(x=input$red7,y=input$red8) 
+    b <- ggplot(aa, aes_string(x = aa[,2] ,y=aa[,3], comune = aa[,1] )) +
+    geom_point()+labs(x=input$red7,y=input$red8) 
     
+    ggplotly(b, tooltip = c("x","y","comune"))
    
     
   })  
   
-  output$barplot <- renderPlot({
+  output$barplot <- renderPlotly({
     
     
     a <- red.fin %>% mutate_if(is.numeric, ~round(.,3))
@@ -942,19 +943,28 @@ server <- function(input, output) {
     s1 = input$table_rows_current
     s2 = input$table_rows_all
     
+    ##
+    ##
     
-    x <- c(input$red7,"macro")
+    x <- c("Denominazione.Comune",input$red8,"macro")
     a <- as.data.frame(a[s2,x])
+    
     
     
     #par(mar = c(4, 4, 1, .1))
     
-
     
-    c<- ggplot(a, aes(y=a[,1], x=a[,2])) + 
-      geom_bar(stat = "identity",fill= "#E69F00",alpha=.7, width=.4) + theme_test()+
-      coord_flip() + ylab("")
-    c
+    c<- ggplot(a, aes(x=a[,input$red8], fill = macro )) + 
+      geom_histogram(binwidth = 190)+ ylab("count") +
+      xlab(input$red8) + xlim(c(min(a[,2], na.rm = TRUE),quantile(a[,2],na.rm=TRUE)[4]))
+    
+    ggplotly(c, tooltip = c("count","fill"))
+    
+    
+   
+    #ggplotly(c, tooltip = c(x,"macro"))
+    
+    
   })  
 
   output$corr <- renderPlot({
@@ -1138,7 +1148,6 @@ server <- function(input, output) {
     
 }
       
-
 
 
 shinyApp(ui, server)
