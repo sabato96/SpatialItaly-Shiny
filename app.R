@@ -10,8 +10,8 @@
 # Get the data
 
 #source("source script.R")
-load("C:/Users/gargi/Desktop/Progetto Lab/.RData")
-
+#load("C:/Users/Maria/Desktop/Progetto Lab")
+load(".RData")
 
 # Librerie
 #####
@@ -42,8 +42,8 @@ library(shinydashboard)
 library(DT)
 library(ggplot2)
 library(plotly)
-
-ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
+library(GGally)
+library(magrittr)
 # Shiny App
 ########
 
@@ -61,7 +61,8 @@ ui <- dashboardPage(
       menuItem("Explorative", tabName = "explorative", icon = icon("dashboard"),
                menuSubItem("Data Table", tabName = "table", icon = icon("dashboard")), #7,8
                menuSubItem("Circle Plot", tabName = "cirplot", icon = icon("dashboard")), #2
-               menuSubItem("Violin Plot", tabName = "viol", icon = icon("dashboard")) #3
+               menuSubItem("Violin Plot", tabName = "viol", icon = icon("dashboard")),#3
+               menuSubItem("Correlogramm", tabName="Corr", icon=icon("dashboard"))#10,11,12,13
                ),
       
       menuItem("Leaflet map", tabName = "leaflethome", icon = icon("dashboard"),
@@ -103,11 +104,16 @@ ui <- dashboardPage(
                                label = "Choose a variable to display",
                                choices = etichette,
                                selected = "")),
+                   
 
               
-                plotOutput("scatter",width = "100%"),
+                mainPanel ( column(6, 
+                  plotOutput("scatter",width = "100%")),
+                  column(5,
                 
-                  
+                plotOutput("barplot", width = "100%"),offset = 1), width= 12)
+               
+                 
                   
                   
                 
@@ -188,6 +194,52 @@ ui <- dashboardPage(
                   
                 ))),
       
+
+
+#####
+      tabItem(tabName = "Corr",
+        #####
+        
+            sidebarLayout(
+          
+              sidebarPanel(
+            
+            
+                selectInput(inputId = "red10",
+                            label = "Choose a variable to display",
+                            choices = etichette,
+                            selected = ""),
+            
+                selectInput(inputId = "red11",
+                            label = "Choose a variable to display",
+                            choices = etichette,
+                            selected = ""),
+            
+                selectInput(inputId = "red12",
+                            label = "Choose a variable to display",
+                            choices = etichette,
+                            selected = ""),
+            
+                selectInput(inputId = "red13",
+                            label = "Choose a variable to display",
+                            choices = etichette,
+                            selected = ""),
+            
+            
+            
+            #checkboxInput("check", label = "Interactive plot", value = FALSE),
+            
+                actionButton("Run10", "Run code")
+            
+            
+          ),
+          
+          # Show a plot of the generated distribution
+          mainPanel(
+            
+            plotOutput("corr", width = "100%"),
+            
+          ))), 
 #####
       
       tabItem(tabName = "leafletglobal",
@@ -295,14 +347,17 @@ fluidPage(
                  
                  selectInput(inputId = "method1",
                              label = "Choose adiacency method",
-                             choices = list("Queen","Distance"),
+                             choices = list("Queen","Distance","Nearest"),
                              selected = "Queen"),
                  
-                 selectInput(inputId = "method2",
-                             label = "Choose matrix method",
-                             choices = list("Binary","Row.standardized","Global.standardized",
-                                            "Variance.reduction"),
-                             selected = "Binary"),
+                 
+                 numericInput(inputId = "k1",
+                              label = "N. of neighbour",
+                              value = 2,
+                              min=2,
+                              max=6),
+                 
+                 
                  
                  
                  sliderInput(inputId = "distance",
@@ -337,15 +392,14 @@ fluidPage(
                 
                 selectInput(inputId = "method3",
                             label = "Choose adiacency method",
-                            choices = list("Queen","Distance"),
+                            choices = list("Queen","Distance","Nearest"),
                             selected = "Queen"),
-                
-                selectInput(inputId = "method4",
-                            label = "Choose matrix method",
-                            choices = list("Binary","Row.standardized","Global.standardized",
-                                           "Variance.reduction"),
-                            selected = "Binary"),
-                
+              
+                numericInput(inputId = "k2",
+                             label = "N. of neighbour",
+                             value = 2,
+                             min=2,
+                             max=6),
                 
                 sliderInput(inputId = "distance1",
                             label = "Choose distance",
@@ -520,17 +574,24 @@ server <- function(input, output) {
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method1 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+
         
+        if(input$method1 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k1, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
+      
         
         #Metodo distance based
         if (input$method1 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
-          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -540,18 +601,14 @@ server <- function(input, output) {
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
+
         
         
 
         
         
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
 
-        
         
         
         
@@ -572,10 +629,14 @@ server <- function(input, output) {
              head(ams)
              
              p <- ggplot(data = ams, aes(x=y, y= value)) + 
+               xlim(c(min(y)-mean(y),max(y)+mean(y))) +
                geom_point() + geom_smooth(method = "lm", color = "black") +
                geom_hline(yintercept=mean(ams[,2]), linetype="dashed", color = "red") +
-               geom_vline(xintercept = ybar, linetype="dashed", color = "red")
+               geom_vline(xintercept = ybar, linetype="dashed", color = "red") 
+               
              
+             
+           
              #p <- plotly(p)
              ggplotly(p)
              
@@ -587,9 +648,6 @@ server <- function(input, output) {
       if(input$Run5 == 0)
         return()
       isolate({
-     
-        
-        
         OGR.prov.sub <- OGR.prov[]
         OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
         xy.sub <- coordinates(OGR.prov.sub)
@@ -599,17 +657,24 @@ server <- function(input, output) {
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method1 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+
+        
+        if(input$method1 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k1, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         
         #Metodo distance based
         if (input$method1 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
-          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -619,23 +684,13 @@ server <- function(input, output) {
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
         
         
         
         
         
         
-        
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         
         
         
@@ -693,17 +748,24 @@ server <- function(input, output) {
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method3 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+        
+        
+        if(input$method3 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         
         #Metodo distance based
         if (input$method3 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
-                               row.names = OGR.prov.sub@data$seq)
           
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -713,16 +775,13 @@ server <- function(input, output) {
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
         
         
         
         
         
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
+        
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         
         
         
@@ -771,17 +830,24 @@ server <- function(input, output) {
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method3 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+        
+        
+        if(input$method3 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         
         #Metodo distance based
         if (input$method3 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
-                               row.names = OGR.prov.sub@data$seq)
           
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -791,16 +857,15 @@ server <- function(input, output) {
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
         
         
         
         
         
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
+        
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+        
         
         
         
@@ -860,20 +925,63 @@ server <- function(input, output) {
     a <- as.data.frame(a[s2,x])
  
     
-    par(mar = c(4, 4, 1, .1))
+   # par(mar = c(4, 4, 1, .1))
     
     b <- ggplot(a, aes(a[,1],a[,2]) )
     b+geom_point()+labs(x=input$red7,y=input$red8) 
     
    
     
-
-
-    
   })  
   
-  
+  output$barplot <- renderPlot({
+    
+    
+    a <- red.fin %>% mutate_if(is.numeric, ~round(.,3))
+    
+    s1 = input$table_rows_current
+    s2 = input$table_rows_all
+    
+    
+    x <- c(input$red7,"macro")
+    a <- as.data.frame(a[s2,x])
+    
+    
+    #par(mar = c(4, 4, 1, .1))
+    
 
+    
+    c<- ggplot(a, aes(y=a[,1], x=a[,2])) + 
+      geom_bar(stat = "identity",fill= "#E69F00",alpha=.7, width=.4) + theme_test()+
+      coord_flip() + ylab("")
+    c
+  })  
+
+  output$corr <- renderPlot({
+    
+    if(input$Run10 == 0)
+      return()
+    
+    isolate({
+      
+      yy <- red.fin[etichette]
+      
+      yy$macro<- red.fin$macro
+      
+      
+      x <- c(input$red10, input$red11, input$red12, input$red13,"macro")
+      xx <- yy[x]
+      
+      y <- as.data.frame(xx)
+      
+      
+      d<- ggpairs(y,columns= 1:(ncol(y)-1),
+                  ggplot2::aes(colour=macro, alpha=.3, width=.2 )) 
+      d 
+      
+      
+    }) 
+    })
   
   output$violinplot <- renderPlotly({
       

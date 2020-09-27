@@ -23,7 +23,9 @@ max-width: 1650px;
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-load("C:/Users/gargi/Desktop/Progetto Lab/.RData")
+
+
+load(".RData")
 
 
 # Librerie
@@ -658,11 +660,17 @@ shinyApp(
                                    "Sud"),
                     selected = "Nord"),
         
+        numericInput(inputId = "k",
+                     label = "N. of neighbour",
+                     value = 2,
+                     min=2,
+                     max=6),
+
         
         selectInput(inputId = "method",
                     label = "Choose a method",
-                    choices = list("Queen", "Distance"),
-                    selected = ""),
+                    choices = list("Queen", "Distance","Nearest"),
+                    selected = "Queen"),
         
         
         sliderInput(inputId = "distance",
@@ -711,19 +719,27 @@ shinyApp(
         ### Adicenze
         
         #Metodo semplice QUEEN
-
+        if(input$method == "Queen"){
         wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        } 
         
         
+        if(input$method == "Nearest"){
+         wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         #Metodo distance based
         if (input$method == "Distance"){
           
-        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
-                             row.names = OGR.prov.sub@data$seq)
-       
+          #dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+         
         }
+        
+
+       
+        
         
         ## Plot adiacenze
         
@@ -890,14 +906,14 @@ ui <- fluidPage(
       
                         selectInput(inputId = "method1",
                              label = "Choose adiacency method",
-                             choices = list("Queen","Distance"),
+                             choices = list("Queen","Distance","Nearest"),
                              selected = "Queen"),
                  
-                        selectInput(inputId = "method2",
-                             label = "Choose matrix method",
-                             choices = list("Binary","Row.standardized","Global.standardized",
-                                            "Variance.reduction"),
-                             selected = "Binary"),
+                        numericInput(inputId = "k",
+                             label = "N. of neighbour",
+                             value = 2,
+                             min=2,
+                             max=6),
                  
                  
                         sliderInput(inputId = "distance",
@@ -937,7 +953,6 @@ ui <- fluidPage(
       isolate({
       
         
-        
            
         OGR.prov.sub <- OGR.prov[]
         OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
@@ -948,17 +963,24 @@ ui <- fluidPage(
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method1 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+        
+        
+        if(input$method1 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         
         #Metodo distance based
         if (input$method1 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
-          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -968,16 +990,13 @@ ui <- fluidPage(
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
         
         
-
         
         
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
 
         
              n <- length(OGR.prov)
@@ -1010,8 +1029,7 @@ ui <- fluidPage(
       if(input$Run5 == 0)
         return()
       isolate({
-         
-        OGR.prov.sub <- OGR.prov[]
+         OGR.prov.sub <- OGR.prov[]
         OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
         xy.sub <- coordinates(OGR.prov.sub)
         
@@ -1020,17 +1038,24 @@ ui <- fluidPage(
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method1 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+        
+        
+        if(input$method1 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         
         #Metodo distance based
         if (input$method1 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
-          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -1040,16 +1065,13 @@ ui <- fluidPage(
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
         
         
-
         
         
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method2]], zero.policy = TRUE)
+        
+        
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
 
         
       n <- length(OGR.prov)
@@ -1298,15 +1320,14 @@ ui <- fluidPage(
     sidebarPanel(
                 selectInput(inputId = "method3",
                             label = "Choose adiacency method",
-                            choices = list("Queen","Distance"),
+                            choices = list("Queen","Distance","Nearest"),
                             selected = "Queen"),
-                
-                selectInput(inputId = "method4",
-                            label = "Choose matrix method",
-                            choices = list("Binary","Row.standardized","Global.standardized",
-                                           "Variance.reduction"),
-                            selected = "Binary"),
-                
+                                
+                numericInput(inputId = "k",
+                             label = "N. of neighbour",
+                             value = 2,
+                             min=2,
+                             max=6),
                 
                 sliderInput(inputId = "distance1",
                             label = "Choose distance",
@@ -1350,6 +1371,7 @@ ui <- fluidPage(
         
          
         
+        
         #Scelta criterio adiacenze
         
         OGR.prov.sub <- OGR.prov[]
@@ -1361,15 +1383,22 @@ ui <- fluidPage(
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method3 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+        
+        
+        if(input$method3 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         
         #Metodo distance based
         if (input$method3 == "Distance"){
           
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           
         }
@@ -1381,16 +1410,14 @@ ui <- fluidPage(
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
         
         
         
         
         
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
+        
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
              z <- input$red6
              zz <- input$n.sim
              
@@ -1427,6 +1454,8 @@ ui <- fluidPage(
                 
         
         #Scelta criterio adiacenze
+           
+        #Scelta criterio adiacenze
         
         OGR.prov.sub <- OGR.prov[]
         OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
@@ -1437,17 +1466,24 @@ ui <- fluidPage(
         #Metodo semplice QUEEN
         
         
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        if(input$method3 == "Queen"){
+          wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        }
         
+        
+        
+        if(input$method3 == "Nearest"){
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        }
         
         
         #Metodo distance based
         if (input$method3 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
-                               row.names = OGR.prov.sub@data$seq)
           
+          wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
+                               row.names = OGR.prov.sub@data$seq)
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -1457,16 +1493,18 @@ ui <- fluidPage(
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
         
-        ty <- list(Binary="B",
-                   Row.standardized="W",
-                   Global.standardized="C",
-                   Variance.reduction="S")
         
         
         
         
         
-        wm.prov <- nb2mat(wr.sub, style = ty[[input$method4]], zero.policy = TRUE)
+        
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+        
+        
+        
+        
         z <- input$red6
         zz <- input$n.sim
         
@@ -1501,6 +1539,18 @@ ui <- fluidPage(
   
 )
 
+```
+
+
+
+## Risultati empirici
+
+```{r}
+
+#knitr::kable(queen.table,caption = "Queen")
+#knitr::kable(dist.table,caption = "Distance")
+#knitr::kable(near.table,caption = "Neighbour")
+knitr::kable(all.table,caption = "Empirical Results", align = "cccccccccc", digits = 4, "pipe")
 ```
 
 
