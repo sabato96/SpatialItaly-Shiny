@@ -47,9 +47,9 @@ library(shinydashboard)
 library(DT)
 library(ggplot2)
 library(plotly)
+library(GGally)
+library(magrittr)
 
-
-ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
 
 ```
 
@@ -76,10 +76,35 @@ Per ogni tipologia di reddito rilevata erano presenti due variabili, cioè la fr
 shinyApp(
         
   ui <- fluidPage(
-                 
-                  DTOutput("table", width = "100%", height = 600)
-                  
-                       ),
+              
+                #sidebar panel serve a inserire le scelte dell'utente
+                
+                DTOutput("table", width = "100%"),
+                
+                  fluidRow(
+                    column(6,
+                    
+                   selectInput(inputId = "red7",
+                               label = "Choose a variable to display",
+                               choices = etichette,
+                               selected = "") ),
+                   
+                   column(6,
+                   selectInput(inputId = "red8",
+                               label = "Choose a variable to display",
+                               choices = etichette,
+                               selected = "")),
+                   
+
+              
+                mainPanel ( column(6, 
+                  plotlyOutput("scatter",width = "100%")),
+                  column(5,
+                
+                plotlyOutput("barplot", width = "100%"),offset = 1), width= 12)
+               
+
+                )),
 
   server <- function(input,output) {
           
@@ -94,11 +119,65 @@ shinyApp(
       
       }) 
     
+    output$scatter <- renderPlotly({
+    
+    
+    a <- red.fin %>% mutate_if(is.numeric, ~round(.,3))
+    
+    s1 = input$table_rows_current
+    s2 = input$table_rows_all
+ 
+    
+    xx <- c("Denominazione.Comune",input$red7,input$red8)
+    aa <- as.data.frame(a[s2,xx])
+    
+    
+   # par(mar = c(4, 4, 1, .1))
+    
+    b <- ggplot(aa, aes_string(x = aa[,2] ,y=aa[,3], comune = aa[,1] )) +
+    geom_point()+labs(x=input$red7,y=input$red8) 
+    
+    ggplotly(b, tooltip = c("x","y","comune"))
+   
+    
+  })  
+  
+  output$barplot <- renderPlotly({
+    
+    
+    a <- red.fin %>% mutate_if(is.numeric, ~round(.,3))
+    
+    s1 = input$table_rows_current
+    s2 = input$table_rows_all
+    
+    ##
+    ##
+    
+    x <- c("Denominazione.Comune",input$red8,"macro")
+    a <- as.data.frame(a[s2,x])
+    
+    
+    
+    #par(mar = c(4, 4, 1, .1))
+    
+    
+    c<- ggplot(a, aes_string(x=a[,input$red8], fill = "macro" )) + 
+      geom_histogram(binwidth = 190)+ ylab("count") +
+      xlab(input$red8) + xlim(c(min(a[,2], na.rm = TRUE),quantile(a[,2],na.rm=TRUE)[4]))
+    
+    ggplotly(c, tooltip = c("x","count","fill"))
+    
+    
+   
+    #ggplotly(c, tooltip = c(x,"macro"))
+    
+    
+  })  
    
     
     } ,
   
-  options = list(height = 700)
+  options = list(height = 1100)
   
 )
 
@@ -124,7 +203,19 @@ ui <- fluidPage(
     sidebarPanel(
       
                         selectInput(inputId = "red2",
-                              label = "Choose a variable to display",
+                              label = "Choose a variable for cir/viol plot",
+                              choices = etichette[1:7],
+                              selected = ""),
+                        selectInput(inputId = "red33",
+                              label = "Choose a variable for corr.",
+                              choices = etichette[1:7],
+                              selected = ""),
+                        selectInput(inputId = "red34",
+                              label = "Choose a variable for corr.",
+                              choices = etichette[1:7],
+                              selected = ""),
+                        selectInput(inputId = "red35",
+                              label = "Choose a variablefor corr.",
                               choices = etichette[1:7],
                               selected = ""),
                         
@@ -151,7 +242,8 @@ ui <- fluidPage(
       # Output: Tabset w/ plot, summary, and table ----
       tabsetPanel(type = "tabs",
                   tabPanel("Circ. plot", plotOutput("cirplot", height = 600)),
-                  tabPanel("Viol. plot", plotlyOutput("violinplot", height = 600))
+                  tabPanel("Viol. plot", plotlyOutput("violinplot", height = 600)),
+                  tabPanel("Corr.plot", plotOutput("corr", height= 600))
                   )
                   
 
@@ -198,8 +290,8 @@ server = function(input,output) {
       
       p <- ggplot(y, aes(y=y[[xx]], x=y$macro, fill = y$macro)) + 
         geom_violin() + 
-        theme(legend.title=element_text(face="bold")) + xlab("Aree geografiche") +
-        labs(fill="Aree geografiche") + theme(legend.text = element_text( face = "bold")) +
+        theme(legend.title=element_text(face="bold")) + ylab(xx) +
+        xlab("Aree geografiche") + theme(legend.text = element_text( face = "bold")) +
         scale_fill_brewer(palette=input$palette3)
       
       p 
@@ -240,8 +332,8 @@ server = function(input,output) {
     
     
     
-    # empty bar è una barra vuota che aggiunge spazio tra ogni gruppo
-    empty_bar <- 4
+    # empty bar e' una barra vuota che aggiunge spazio tra ogni gruppo
+    empty_bar <- 9
     to_add <- data.frame( matrix(NA, empty_bar*nlevels(dat.$group), ncol(dat.)) )
     colnames(to_add) <- colnames(dat.)
     to_add$group <- rep(levels(dat.$group), each=empty_bar)
@@ -254,7 +346,7 @@ server = function(input,output) {
     number_of_bar <- nrow(label_data)
     angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
     label_data$hjust <- ifelse(angle < -90, 1, 0)
-    label_data$angle <- ifelse(angle < -90, angle+180, angle)
+    label_data$angle <- ifelse(angle < -90, angle+180, angle-33)
     
     # prepare a data frame for base lines
     base_data <- dat. %>% 
@@ -265,8 +357,8 @@ server = function(input,output) {
     
     # prepare a data frame for grid (scales)
     grid_data <- base_data
-    grid_data$end <- grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 1
-    grid_data$start <- grid_data$start - 1
+    grid_data$end <- grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 3
+    grid_data$start <- grid_data$start - 3
     grid_data <- grid_data[-1,]
     
     
@@ -277,17 +369,15 @@ server = function(input,output) {
     
     
     # Make the plot
-    p <- ggplot(dat., aes(x=id, y=value, fill=group)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
-      geom_bar(aes(x = as.factor(id), y = value, fill = group), stat = "identity", alpha = 0.7) +
+    p <- ggplot(dat., aes(x=as.factor(id), y=value, fill=group )) +  # Note that id is a factor. If x is numeric, there is some space between the first bar
+      geom_col(aes(x = as.factor(id), y = value, fill = group), stat = "identity", alpha = 0.7) +
       
-      geom_segment(data=grid_data, aes(x = end, y = lev[4], xend = start, yend = lev[4]), colour = "black", alpha=1, size=0.8 , inherit.aes = FALSE ) +
+      geom_segment(data=grid_data, aes(x = end, y = lev[4], xend = start, yend = lev[4]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
       geom_segment(data=grid_data, aes(x = end, y = lev[3], xend = start, yend = lev[3]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
-      geom_segment(data=grid_data, aes(x = end, y = lev[2], xend = start, yend = lev[2]), colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-      geom_segment(data=grid_data, aes(x = end, y = lev[1], xend = start, yend = lev[1]), colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+      geom_segment(data=grid_data, aes(x = end, y = lev[2], xend = start, yend = lev[2]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
+      geom_segment(data=grid_data, aes(x = end, y = lev[1], xend = start, yend = lev[1]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
       
-      annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="grey", size=5 , angle=0, fontface="bold", hjust=1) +
-      
-      geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.6) +
+      annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="black", size=5 , angle=0, fontface="bold", hjust=-0.8) +
       
       
       ylim(-1500,max(data[et])+2200) +
@@ -297,7 +387,7 @@ server = function(input,output) {
         axis.text = element_blank(),
         axis.title = element_blank(),
         panel.grid = element_blank(),
-        plot.margin = unit(rep(-1,9), "cm") 
+        plot.margin = unit(rep(-2,7), "cm") 
       ) +
       coord_polar() + 
       geom_text(data=label_data, aes(x=id, y=value+60, label=individual, hjust=hjust), 
@@ -313,6 +403,31 @@ server = function(input,output) {
     
   })
 
+   output$corr <- renderPlot({
+    
+    if(input$Run2 == 0)
+      return()
+    
+    isolate({
+      
+      yy <- red.fin[etichette]
+      
+      yy$macro<- red.fin$macro
+      
+      
+      x <- c(input$red2, input$red33, input$red34, input$red35,"macro")
+      xx <- yy[x]
+      
+      y <- as.data.frame(xx)
+      
+      
+      d<- ggpairs(y,columns= 1:(ncol(y)-1),
+                  ggplot2::aes(colour=macro, alpha=.3, width=.2 )) 
+      d 
+      
+      
+    }) 
+    })
 
     } ,
   
@@ -1369,8 +1484,6 @@ ui <- fluidPage(
         return()
       isolate({
         
-         
-        
         
         #Scelta criterio adiacenze
         
@@ -1390,17 +1503,17 @@ ui <- fluidPage(
         
         
         if(input$method3 == "Nearest"){
-          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
         }
         
         
         #Metodo distance based
         if (input$method3 == "Distance"){
           
-          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
-          
+          dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -1418,6 +1531,9 @@ ui <- fluidPage(
         
         wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         
+        
+        
+ 
              z <- input$red6
              zz <- input$n.sim
              
@@ -1451,10 +1567,6 @@ ui <- fluidPage(
         return()
       isolate({
         
-                
-        
-        #Scelta criterio adiacenze
-           
         #Scelta criterio adiacenze
         
         OGR.prov.sub <- OGR.prov[]
@@ -1473,7 +1585,7 @@ ui <- fluidPage(
         
         
         if(input$method3 == "Nearest"){
-          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
         }
         
         
@@ -1505,6 +1617,8 @@ ui <- fluidPage(
         
         
         
+        
+        
         z <- input$red6
         zz <- input$n.sim
         
@@ -1530,7 +1644,9 @@ ui <- fluidPage(
         # print(moran.mboot)
         
       }) })
-   
+  
+  
+  
 
   
     } ,

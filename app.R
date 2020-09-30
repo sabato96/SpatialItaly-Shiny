@@ -954,11 +954,11 @@ server <- function(input, output) {
     #par(mar = c(4, 4, 1, .1))
     
     
-    c<- ggplot(a, aes(x=a[,input$red8], fill = macro )) + 
+    c<- ggplot(a, aes_string(x=a[,input$red8], fill = "macro" )) + 
       geom_histogram(binwidth = 190)+ ylab("count") +
       xlab(input$red8) + xlim(c(min(a[,2], na.rm = TRUE),quantile(a[,2],na.rm=TRUE)[4]))
     
-    ggplotly(c, tooltip = c("count","fill"))
+    ggplotly(c, tooltip = c("x","count","fill"))
     
     
    
@@ -1072,7 +1072,7 @@ server <- function(input, output) {
     
     
     # empty bar e' una barra vuota che aggiunge spazio tra ogni gruppo
-    empty_bar <- 4
+    empty_bar <- 9
     to_add <- data.frame( matrix(NA, empty_bar*nlevels(dat.$group), ncol(dat.)) )
     colnames(to_add) <- colnames(dat.)
     to_add$group <- rep(levels(dat.$group), each=empty_bar)
@@ -1085,7 +1085,7 @@ server <- function(input, output) {
     number_of_bar <- nrow(label_data)
     angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
     label_data$hjust <- ifelse(angle < -90, 1, 0)
-    label_data$angle <- ifelse(angle < -90, angle+180, angle)
+    label_data$angle <- ifelse(angle < -90, angle+180, angle-33)
     
     # prepare a data frame for base lines
     base_data <- dat. %>% 
@@ -1096,8 +1096,8 @@ server <- function(input, output) {
     
     # prepare a data frame for grid (scales)
     grid_data <- base_data
-    grid_data$end <- grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 1
-    grid_data$start <- grid_data$start - 1
+    grid_data$end <- grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 3
+    grid_data$start <- grid_data$start - 3
     grid_data <- grid_data[-1,]
     
     
@@ -1108,17 +1108,15 @@ server <- function(input, output) {
     
     
     # Make the plot
-    p <- ggplot(dat., aes(x=id, y=value, fill=group)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
-      geom_bar(aes(x = as.factor(id), y = value, fill = group), stat = "identity", alpha = 0.7) +
+    p <- ggplot(dat., aes(x=as.factor(id), y=value, fill=group )) +  # Note that id is a factor. If x is numeric, there is some space between the first bar
+      geom_col(aes(x = as.factor(id), y = value, fill = group), stat = "identity", alpha = 0.7) +
       
-      geom_segment(data=grid_data, aes(x = end, y = lev[4], xend = start, yend = lev[4]), colour = "black", alpha=1, size=0.8 , inherit.aes = FALSE ) +
+      geom_segment(data=grid_data, aes(x = end, y = lev[4], xend = start, yend = lev[4]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
       geom_segment(data=grid_data, aes(x = end, y = lev[3], xend = start, yend = lev[3]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
-      geom_segment(data=grid_data, aes(x = end, y = lev[2], xend = start, yend = lev[2]), colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-      geom_segment(data=grid_data, aes(x = end, y = lev[1], xend = start, yend = lev[1]), colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+      geom_segment(data=grid_data, aes(x = end, y = lev[2], xend = start, yend = lev[2]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
+      geom_segment(data=grid_data, aes(x = end, y = lev[1], xend = start, yend = lev[1]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
       
-      annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="black", size=5 , angle=0, fontface="bold", hjust=1) +
-      
-      geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.6) +
+      annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="black", size=5 , angle=0, fontface="bold", hjust=-0.8) +
       
       
       ylim(-1500,max(data[et])+2200) +
@@ -1128,7 +1126,7 @@ server <- function(input, output) {
         axis.text = element_blank(),
         axis.title = element_blank(),
         panel.grid = element_blank(),
-        plot.margin = unit(rep(-1,9), "cm") 
+        plot.margin = unit(rep(-2,7), "cm") 
       ) +
       coord_polar() + 
       geom_text(data=label_data, aes(x=id, y=value+60, label=individual, hjust=hjust), 
