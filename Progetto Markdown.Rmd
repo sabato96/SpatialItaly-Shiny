@@ -54,12 +54,12 @@ library(magrittr)
 ```
 
 # Introduzione
-Il divario economico tra Nord e Sud Italia è fin dal 1861 un problema sociale ma soprattutto economico che si ripercuote sulla qualità della vita di milioni di persone. Secondo i dati dell'ISTAT il Mezzogiorno presenta un ampio differenziale di crescita rispetto al Nord. Nel corso degli anni molti studi hanno provato a identificare le cause di questo divario, che rimangono tutt'oggi difficili da individuare con precisione. Ciò che possiamo sicuramente asserire è che una delle conseguenze di questo divario è l'assenza, al Sud, di un tessuto industriale strutturato e di conseguenza il mercato del lavoro è profondamente diverso da quello del resto d'Italia, condannando i giovani, in particolare i meridionali, ad un futuro incerto e precario dal punto di vista lavorativo. 
+Il divario economico tra Nord e Sud Italia è fin dal 1861 un problema sociale ma soprattutto economico che si ripercuote sulla qualità della vita di milioni di persone. Secondo i dati dell'ISTAT il Mezzogiorno presenta un ampio divario di crescita rispetto al Nord. Nel corso degli anni molti studi hanno provato a identificare le cause di questo divario, che rimangono tutt'oggi difficili da individuare con precisione. Ciò che possiamo sicuramente asserire è che una delle cause di questo divario è l'assenza, al Sud, di un tessuto industriale strutturato e di conseguenza il mercato del lavoro è profondamente diverso da quello del resto d'Italia, condannando i giovani, in particolare i meridionali, ad un futuro incerto e precario dal punto di vista lavorativo. 
 
 
-Questo lavoro si pone l’obiettivo di studiare la distribuzione spaziale delle varie tipologie di reddito sul territorio italiano, in particolare verranno utilizzati metodi propri dell’analisi spaziale al fine di valutare se ci sono zone dello stivale in cui le variabili osservate presentano autocorrelazione spaziale o meno.
+Questo lavoro si pone l’obiettivo di studiare la distribuzione spaziale delle varie tipologie di reddito sul territorio italiano; in particolare verranno utilizzati metodi propri dell’analisi spaziale al fine di valutare se ci sono zone dello stivale in cui le variabili osservate presentano autocorrelazione spaziale o meno.
 
-Lo studio procederà per gradi. In primis verranno analizzati i dati dal punto di vista descrittivo per identificare le propietà statistiche delle variabili considerate e quindi procedere ad una trattazione efficace. Successivamente verranno gettate le basi teoriche dell'analisi spaziale descrivendo minuziosamente il framework utilizzato per l'analisi.
+Lo studio procederà per gradi. In primis verranno analizzati i dati dal punto di vista descrittivo per identificare le proprietà statistiche delle variabili considerate e quindi procedere ad una trattazione efficace. Successivamente verranno trattate le basi teoriche dell'analisi spaziale descrivendo minuziosamente il framework utilizzato per l'analisi.
 
 
 # Data Exploration
@@ -67,7 +67,7 @@ Lo studio procederà per gradi. In primis verranno analizzati i dati dal punto d
 
 I dati sui redditi per comune sono quelli forniti dall’ISTAT relativi all’anno 2016. Il problema principale da affrontare nella prima fase del lavoro è stato quello di valutare la qualità e la coerenza dei dati forniti dall’ Istituto. In particolare nel dataset oggetto di studio erano presenti comuni conteggiati più volte. Una volta individuati questi comuni è stato possibile rimuovere i doppioni e procedere alla fase seguente. 
   
-Per ogni tipologia di reddito rilevata erano presenti due variabili, cioè la frequenza delle osservazioni e l’ammontare totale rilevato; Al fine di rendere più semplice la trattazione è stata calcolata una media per ogni comune dividendo l’ammontare totale per la frequenza per tutte le tipologie di reddito rilevate. Questo ci ha permesso di ridurre il numero di variabili osservate. Dopo questa operazione preliminare il dataset presentava la struttura seguente:       
+Per ogni tipologia di reddito rilevata erano presenti due variabili, cioè la frequenza delle osservazioni e l’ammontare totale rilevato; al fine di rendere più semplice la trattazione è stata calcolata una media per ogni comune dividendo l’ammontare totale per la rispettiva frequenza per ogni tipologia di reddito. Dopo queste operazioni preliminari il dataset si presenta come segue:       
 
 <br><br>
 
@@ -189,6 +189,24 @@ shinyApp(
 
 ## Descriptive statistics
 Una volta che il dataset è stato corretto e sintetizzato nel modo sopra descritto diventa possibile calcolare tutte le statistiche descrittive necessarie per analizzare quantitativamente le variabili di interesse. 
+
+La prima tipologia di grafico presente nell'app è un circle plot. Quest' ultimo è molto simile ad un bar plot con la differenza che la visualizzazione non è orizzontale o verticale, bensì circolare. Ogni barra rappresenta il valor medio del reddito selezionato per ogni regione italiana. E' possibile poi notare come le barre siano raggruppate secondo macro aree (nord,sud,centro).
+Il grafico presenta anche dei livelli contrassegnati da archi di circonferenza che permettono, per grandi linee, un confronto tra le aree anche di natura quantitativa.
+E' evidente come le regioni del nord Italia siano di frequente quelle che presentano valori medi più elevati rispetto a quelli delle altre macro regioni.
+
+La seconda tipologia di grafico è un violin plot. Questo serve ad evidenziare in particolare la densità delle osservazioni. A differenza del box-plot, il violin plot non riporta esplicitamente le classiche statistiche quali quantili e media, ma mostra la densità di osservazioni per ogni livello della variabile osservata.  
+Abbiamo scelto questa tipologia di rappresentazione poichè ci permette di confrontare la densità di osservazioni tra macro aree per ogni tipologia di reddito.
+
+E' possibile notare come, ad esempio, per i redditi da fabbricati la densità nelle regioni del sud è più elevata per valori minori rispetto alla densità delle altre macro aree. Data la presenza di numerosi outlier, l'app shiny permette di escludere i valori estremi cliccando ripetutamente sul pulsante "Run Code".
+
+La terza tipologia di grafico è un correlogramma. E' possibile anche in questo caso scegliere quali tipologie di reddito includere nell'analisi.
+
+Passando ad analizzare i risultati ottenuti notiamo subito che sulla diagonale dell'output vengono rappresentate le densità per i vari redditi, divise secondo l'appartenenza alla rispettiva macro regione, come visto in precedenza per le altre tipologie di grafici.
+Nella parte inferiore rispetto alla diagonale, invece, sono presenti vari scatterplot. Ogni scatterplot si riferisce alla coppia di redditi indicata nelle corrispondenti etichette presenti sulle righe e sulle colonne. 
+
+Infine nella parte superiore troviamo le correlazioni (Pearson) tra le coppie di redditi considerati. La prima correlazione indicata è quella che non tiene conto delle differenze tra macro aree, bensì le considera congiuntamente. Gli asterischi indicano il livello di significatività del risultato ottenuto, calcolato secondo il classico test per la correlazione, cioè quello che utilizza la distribuzione t di Student con (n-2) gradi di libertà.
+Inoltre la correlazione viene calcolata anche dividendo le osservazioni in macro aree.
+
 
 <br><br>
 ```{r}
@@ -458,11 +476,11 @@ plot(OGR.prov, col = "gray", border = "blue") # Disegna shapefile vuoto
 ```
 
 <br>
-Nel caso sopra riportato  i poligoni rappresentano la forma e la superficie di regioni e province italiane. Utilizzando la stessa procedura e i dati forniti dall’ISTAT sono stati importati in R anche gli shapefile per i comuni.
+Nel caso sopra riportato i poligoni rappresentano la forma e la superficie di regioni e province italiane. Utilizzando la stessa procedura e i dati forniti dall’ISTAT sono stati importati in R anche gli shapefile per i comuni.
 
-Una volta importati gli shapefile per comuni, province e regioni è stato possibile inserire i dati utilizzando la funzione merge di R prendendo come riferimento la denominazione delle unità amministrative. In questo modo l’oggetto SpatialPolygonsDataFrame (S4 class) conterrà sia le informazioni spaziali sia i dati sui redditi per ogni poligono considerato. E’ necessario precisare, infine, che nel caso di regioni e province i dati comunali sono stati raggruppati per provincia o regione. Il valore del reddito per provincia (regione) sarà quindi uguale alla media del reddito dei comuni comuni presenti nella provincia (regione) . 
+Una volta importati gli shapefile per comuni, province e regioni è stato possibile inserire i dati utilizzando la funzione merge di R prendendo come riferimento la denominazione delle unità amministrative. In questo modo l’oggetto SpatialPolygonsDataFrame (S4 class) conterrà sia le informazioni spaziali sia i dati sui redditi per ogni poligono considerato. E’ necessario precisare, infine, che nel caso di regioni e province i dati comunali necessitavano necessariamente di un raggruppamento. Il valore del reddito per provincia (regione) sarà quindi uguale alla media del reddito dei comuni presenti nella provincia (regione). 
 
-Nell'app seguente è possibile osservare i dati per provincia (leaflet global) e quelli per comune (leaflet local). Per quanto riguarda la visualizzazione dei comuni, è possibile scegliere quale macroregione italiana visualizzare, questo poichè il caricamento dei comuni su tutto il territorio nazionale sarebbe stato computazionalmente oneroso e avrebbe richiesto molto tempo per il rendering.
+Nell'app seguente è possibile osservare i dati per provincia (leaflet global) e quelli per comune (leaflet local) attraverso una mappa interattiva. Per quanto riguarda la visualizzazione dei comuni, è possibile scegliere quale macro regione italiana visualizzare, questo poichè il caricamento dei comuni su tutto il territorio nazionale sarebbe stato computazionalmente oneroso e avrebbe richiesto molto tempo per il rendering. E' stata però aggiunta una casella denominata "All" da selezionare qualora si sia interessati al grafico complessivo dei comuni italiani.
 
 <br><br>
 ```{r}
@@ -694,29 +712,33 @@ server <- function(input,output) {
 
 ## Spatial autocorrelation
 
-Per autocorrelazione spaziale si intende quel fenomeno per cui nell’analisi spaziale di un dataset i valori di una certa variabile osservata saranno più simili in località contigue o vicine e diversi per località lontane tra loro. Questa caratteristica di una variabile che è autocorrelata viene comunemente associata alla disciplina dei processi stocastici, cioè processi che si evolvono nel tempo. In questo caso l’autocorrelazione è definita spaziale poiché ha effetto sullo “spazio” invece che sul tempo.
+Per autocorrelazione spaziale si intende quel fenomeno per cui nell’analisi spaziale di un dataset i valori di una certa variabile osservata saranno simili in località contigue o vicine e diversi per località lontane tra loro. Questa caratteristica di una variabile che è autocorrelata viene comunemente associata alla disciplina dei processi stocastici, cioè processi che si evolvono nel tempo. In questo caso l’autocorrelazione è definita spaziale poiché ha effetto sullo “spazio” invece che sul tempo.
 
 Oltretutto la prima legge della geografia, (Tobler 1970) dice che:
 
-<br>
-> “Ogni cosa è correlata a qualsiasi altra, ma le cose vicine sono più relazionate di quelle lontane”
+
+***
+
+> "Ogni cosa è correlata a qualsiasi altra, ma le cose vicine sono più relazionate di quelle lontane"
+
+
 
 <br>
 
 L’autocorrelazione sarà quindi predominante quanto più la distanza si accorcia. 
 
-Un’implicazione dell’autocorrelazione è il fatto che i dati spaziali non sono indipendenti, per questo si aprono ampi margini di studio di questa tipologia di dati. Lo sviluppo di strumenti analitici ha permesso di avere basi obiettive solide per decidere se in una determinata area geografica è presente un’ autocorrelazione significativamente valida.
+Un’implicazione dell’autocorrelazione è il fatto che i dati spaziali non sono indipendenti, per questo si aprono ampi margini di studio riguardo la distribuzione spaziale dei dati. Lo sviluppo di strumenti analitici ha permesso di avere basi obiettive solide per decidere se in una determinata area geografica è presente un’ autocorrelazione significativamente valida.
 
-La domanda che ci poniamo è quindi se il pattern oggetto di studio è frutto del caso o se ci sono influenze spaziali che hanno giocato un ruolo nella distribuzione spaziale della variabile.
+La domanda che ci poniamo è quindi se il pattern oggetto di studio è frutto del caso o se ci sono influenze spaziali che hanno giocato un ruolo nella distribuzione della variabile.
 I test per la presenza di autocorrelazione sono la base di partenza per la costruzione di modelli spaziali complessi, poiché senza questi rischieremmo di costruire modelli per poi scoprire che le strutture su cui questi modelli si basano sono del tutto insignificanti.
 
-E’ bene ricordare che  l’autocorrelazione spaziale è stata sviluppata prendendo come riferimento dei punti collocati sullo spazio. Nel caso dello shape file utilizzato in questo lavoro le aree studiate (regioni,province,comuni) sono dei poligoni complessi ma la sostanza non cambia poiché l’analisi è estendibile ad oggetti più complessi dei punti, con le dovute accortenze.
+E’ bene ricordare che  l’autocorrelazione spaziale è stata sviluppata prendendo come riferimento dei punti collocati nello spazio. Nel caso dello shape file utilizzato in questo lavoro, le aree studiate (regioni,province,comuni) sono dei poligoni complessi ma la sostanza non cambia poiché l’analisi è estendibile ad oggetti più complessi dei punti, con le dovute accortenze.
 
 
 ### Struttura spaziale
 
-Il primo passo in questo tipo di analisi è definire un metodo che ci permetta di incorporare la prossimità spaziale in una misura di autocorrelazione; A tal fine bisognerà catturare la relazione spaziale di ogni località e per fare ciò utilizzeremo una matrice di pesi spaziale $\textbf{W}$.
-Nella prima riga di questa matrice troviamo l’informazione riguardante la prima località e tutte le altre. Formalmente ogni elemento della matrice $\textbf{W}$, definito come $w_{ij}$ rappresenterà la relazione tra la località i e la località j. Pertanto avremo:
+Il primo passo in questo tipo di analisi è definire un metodo che ci permetta di incorporare la prossimità spaziale in una misura di autocorrelazione; a tal fine bisognerà catturare la relazione spaziale di ogni località con le altre e per fare ciò utilizzeremo una matrice di pesi spaziale $\textbf{W}$.
+Nella prima riga di questa matrice troviamo l’informazione riguardante la prima località rispetto a tutte le altre. Formalmente ogni elemento della matrice $\textbf{W}$, definito come $w_{ij}$ rappresenterà la relazione tra la località $i$ e la località $j$. Pertanto avremo:
 
 
 $$
@@ -729,20 +751,34 @@ w_{n1} & ... & ... & w_{nn} \\
 $$
 
 
-Ogni valore della matrice è dipendente dalla relazione spaziale che lega le due località i e j e soprattutto dipende da come scegliamo di rappresentare questa relazione.
+Ogni valore della matrice è dipendente dalla relazione spaziale che lega le due località $i$ e $j$ e quest'ultima da come scegliamo di definire questa relazione.
 
 Considerato il framework bisogna assegnare un valore alle variabili $w_{ij}$.
 
-L’approccio più semplice è quello dell’adiacenza. Con tale approccio assegneremo valore 1 se le due località sono adiacenti e valore 0 se non lo sono. Sebbene questo approccio sembri semplice esistono alcune varianti. Ad esempio potremmo considerare due poligoni come adiacenti se hanno un confine in comune (Rook’s case), o potremmo considerare sufficiente il fatto che i due poligoni condividano anche un solo vertice (Queen’s case).
+L’approccio più semplice è quello dell’adiacenza. Sebbene questo approccio sembri semplice ne esistono alcune varianti. Ad esempio potremmo considerare due poligoni come adiacenti se hanno un confine in comune (Rook’s case), o potremmo considerare sufficiente il fatto che i due poligoni condividano anche un solo vertice (Queen’s case). 
 
 
-Un altro approccio potrebbe essere quello di ignorare i confini dei poligoni e utilizzare una misura basata sulla distanza tra i centroidi dei poligoni. Basandoci su questo framework, dopo aver costruito la matrice delle distanze tra i centroidi potremmo definire una quantità arbitraria d e di conseguenza considerare adiacenti solo i poligoni le cui distanze sono minori del valore d.
+Un altro approccio potrebbe essere quello di ignorare i confini dei poligoni e utilizzare una misura basata sulla distanza tra i poligoni. Basandoci su questo criterio, dopo aver costruito la matrice delle distanze tra i poligoni, possiamo definire una quantità arbitraria $d$ e di conseguenza considerare collegati solo i poligoni le cui distanze sono minori del valore $d$. Sarà quindi ovvio che per determinati livelli del parametro $d$, la nostra matrice assumerà valori differenti. Più sarà alto questo valore, più il poligono i-esimo avrà collegamenti anche con poligoni più distanti. E' chiaro che questo metodo differisce da quelli esposti in precedenza, poichè non si limita a considerare solo l'adiacenza quale criterio per la costruzione della matrice $\textbf{W}$.
 
-Potremmo correttamente supporre, quindi, che la struttura della matrice $\textbf{W}$ descrive pienamente l'informazione sulla struttura spaziale. In letteratura molti studi sono stati proposti per descrivere le propietà di questa matrice, in particolare [@10.2307/621721] ha analizzato autovalori e autovettori di questa matrice identificando in questi ultimi l'informazione sulla struttura spaziale dei dati. In particolare gli autovalori della matrice forniscono una misura globale del livello di interconnessione del network, mentre gli autovettori indicano la centralità delle località rispetto all'intero sistema.  
+Sulla base della matrice delle distanze tra poligoni è possibile costruire un ulteriore metodo per definire l'esistenza o meno di relazioni tra unità spaziali.
+Il metodo è quello del nearest neighbour. In particolare, fissato un livello $k$, questo metodo considera collegati al generico poligono i-esimo, i primi k poligoni che hanno minor distanza dall'unità spaziale di riferimento. 
 
 
-Sebbene siano stati sviluppati molti metodi complessi per il problema di cui sopra ci limiteremo ad utilizzare i più semplici che verranno formalmente introdotti nel seguito.
-Una considerazione importante da fare prima di procedere oltre riguarda la simmetria della matrice $\textbf{W}$. Saremmo portati a pensare che la matrice debba necessariamente essere simmetrica, e in linea di principio è così. Purtroppo alcuni dei metodi sviluppati per costruire questa matrice non garantiscono la simmetria. Possiamo forzare la matrice ad essere simmetrica mediante questa trasformazione:
+
+E' bene precisare che tutti questi metodi per definire la struttura di relazione tra le unità spaziali vengono implementati in R attraverso il pacchetto spdep. 
+Le funzioni presenti in questo pacchetto danno come output una lista strutturata in modo da tener conto dell'esistenza o meno di rapporti spaziali.
+
+Per giungere alla matrice $\textbf{W}$, cioè a quella necessaria per procedere nell'analisi, bisogna passare la suddetta lista ad un' altra funzione presente nel pacchetto spdep, cioè nb2mat().
+
+La funzione nb2mat permette di costruire la matrice $\textbf{W}$ secondo vari criteri. Quello scelto nel corso di questa analisi è il criterio binario.
+Secondo questo criterio, le unità spaziali considerate collegate, secondo i criteri esposti in precedenza, verranno contrassegnate da un 1, mentre quelle non collegate da uno 0.
+
+
+Potremmo correttamente supporre, quindi, che la struttura della matrice $\textbf{W}$ descrive pienamente l'informazione sulla struttura spaziale. In letteratura molti studi sono stati proposti per descrivere le proprietà di questa matrice, in particolare [@10.2307/621721] ha analizzato autovalori e autovettori di questa matrice identificando in questi ultimi l'informazione sulla struttura spaziale dei dati. In particolelare gli autovalori della matrice forniscono una misura globale del livello di interconnessione del network, mentre gli autovettori indicano la centralità delle località rispetto all'intero sistema.  
+
+
+
+Una considerazione importante da fare prima di procedere oltre riguarda la simmetria della matrice $\textbf{W}$. Saremmo portati a pensare che la matrice debba necessariamente essere simmetrica, e in linea di principio è così. Purtroppo alcuni dei metodi sopra esposti, in particolare quello della distanza e il nearest neighbour non garantiscono la simmetria. Possiamo forzare la matrice ad essere simmetrica mediante questa trasformazione:
 
 $$
 \begin{equation}
@@ -750,7 +786,6 @@ $$
 \end{equation}
 $$
 
-In ogni caso i metodi utilizzati nel corso di questo lavoro per la matrice $\textbf{W}$ garantiscono la simmetria, quindi non sarà necessario utilizzare la trasformazione sopra riportata.
 
 Infine è necessario precisare che la definizione della matrice dei pesi è un passo fondamentale dell'analisi poichè le ipotesi che vengono fatte nel costruire questa matrice compongono il sistema di ipotesi del fenomeno studiato. E' infatti chiaro che qualora la matrice spaziale non rappresenti con fedeltà il sistema studiato i risultati dell'analisi potrebbero essere poco corretti. 
 
@@ -879,9 +914,10 @@ shinyApp(
 
 ## Moran's Index
 
-Una volta determinata la struttura spaziale per l'analisi, possiamo procedere all'analisi dell'autocorrelazione spaziale. Nel corso del tempo sono stati sviluppati molteplici indici per valutare la presenza e la forza dell'autocorrelazione spaziale. 
+Una volta determinata la struttura spaziale possiamo procedere all'analisi dell'autocorrelazione spaziale. Nel corso del tempo sono stati sviluppati molteplici indici per valutare la presenza e la forza dell'autocorrelazione spaziale. 
 La misura più utilizzata è l’indice di Moran. @10.1093/biomet/37.1-2.17 Il modo più semplice per presentare la misura è di immergersi direttamente nella sua formulazione analitica e valutarne ogni componente.
-L’I di Moran è calcolato:
+
+L’I di Moran è calcolato come segue:
 
 
 $$
@@ -897,7 +933,7 @@ $$
 $$
 
 
-La parte importante del calcolo è la seconda frazione. Il numeratore di questa frazione è
+La parte più importante del calcolo è la seconda frazione. Il numeratore di questa frazione è
 
 
 $$
@@ -907,14 +943,14 @@ $$
 $$
 
 
-che si dovrebbe riconoscere come un termine di covarianza. I pedici $i,j$ si riferiscono a diverse unità spaziali e $y$ è il valore dei dati in ciascuna unità spaziale. Calcolando il prodotto delle differenze dalla media complessiva $\bar{y}$, determiniamo la misura in cui esse covariano. Se sia $y_{j}$ che $y_{i}$ si trovano sullo stesso lato della media (sopra o sotto di esso), allora questo prodotto è positivo; se uno è al di sopra della media e l'altro sotto, allora il prodotto è negativo e la dimensione assoluta del totale risultante dipenderà da quanto i valori sono vicini alla media complessiva.
-I termini di covarianza sono moltiplicati per $w_{ij}$, cioè il corrispondente elemento della matrice dei pesi spaziali $\textbf{W}$, in questo modo gli elementi di covarianza sono ponderati in base alla loro relazione spaziale. Quando $\textbf{W}$ è una matrice binaria allora:
+che si dovrebbe riconoscere come un termine di covarianza. I pedici $i,j$ si riferiscono a diverse unità spaziali e $y$ è il valore dei dati in ciascuna unità spaziale. Calcolando il prodotto delle differenze dalla media complessiva $\bar{y}$, determiniamo la misura in cui esse covariano. Se gli scarti i-esimi e j-esimi dalla media hanno lo stesso segno, allora questo prodotto è positivo; se hanno segno opposto allora il prodotto è negativo e il valore del totale risultante dipenderà da quanto i valori sono vicini alla media complessiva.
+I termini di covarianza sono moltiplicati per $w_{ij}$, cioè il corrispondente elemento della matrice dei pesi spaziali $\textbf{W}$. In questo modo gli elementi di covarianza sono ponderati in base alla loro relazione spaziale. Quando $\textbf{W}$ è una matrice binaria, come nel nostro caso, allora:
 
-* Se le unità $i,j$ non sono adiacenti  $\Rightarrow w_{ij} = 0$
+* Se le unità $i,j$ NON sono in relazione tra loro:  $\Rightarrow w_{ij} = 0$
 
-* Se le unità $i,j$ sono adiacenti  $\Rightarrow w_{ij} = 1$
+* Se le unità $i,j$ sono in relazione tra loro:  $\Rightarrow w_{ij} = 1$
 
-In questo modo solamente i termini di covarianza relativi a due località adiacenti saranno inclusi nel calcolo.
+In questo modo solamente i termini di covarianza relativi a due località in relazione reciproca saranno inclusi nel calcolo.
 
 Il denominatore della frazione, cioè la doppia sommatoria dei pesi, serve a tener conto della somma totale dei pesi e a relativizzare la misura calcolata al numeratore.
 
@@ -926,12 +962,13 @@ $$
 \end{equation}
 $$
 
-non è altro che l'inverso della varianza dei dati, il che assicura che l’indice non sia grande semplicemente perché i valori e la variabilità in y sono elevati.
+non è altro che l'inverso della varianza dei dati, il che assicura che l’indice non sia grande semplicemente perché i valori e la variabilità in $y$ sono elevati.
 
 
-La conseguenza di una tale formulazione matematica dell'indice di Moran è che se i dati sono autocorrelati positivamente, allora la maggior parte delle coppie di posizioni adiacenti avrà valori sullo stesso lato della media e Moran avrà un valore positivo. D'altra parte, se i dati sono negativamente correlati , la maggior parte delle posizioni adiacenti avrà valori su lati opposti della media e il risultato complessivo sarà negativo.
+La conseguenza di una tale formulazione matematica dell'indice di Moran è la seguente.
+Se i dati sono autocorrelati positivamente, allora la maggior parte degli scarti dalla media considerati in precedenza avranno lo stesso segno e quindi l'indice di Moran avrà un valore positivo. D'altra parte, se i dati sono negativamente correlati, la maggior parte degli scarti dalla media avranno segno opposto e il risultato complessivo sarà negativo.
 
-Pertanto, per quanto riguarda un coefficiente di correlazione convenzionale, un valore positivo indica un'autocorrelazione positiva e un valore negativo una correlazione negativa. Il valore non è strettamente compreso nell'intervallo da 1 a -1, in quanto è impossibile che una mappa sia perfettamente autocorrelata, sia positivamente che negativamente, tranne che in situazioni molto insolite. In generale, un valore più o meno grande di [0.3;-0.3] indica autocorrelazione relativamente forte.
+Pertanto, per quanto riguarda un coefficiente di correlazione convenzionale, sappiamo che un valore positivo indica una correlazione positiva e un valore negativo una correlazione negativa. Nel caso di autocorrelazione spaziale il valore, nella stragrande maggioranza dei casi, non è strettamente compreso nell'intervallo da 1 a -1, in quanto è impossibile che una mappa sia perfettamente autocorrelata, sia positivamente che negativamente, tranne che in situazioni molto insolite. In generale, un valore più o meno grande di [0.3;-0.3] indica autocorrelazione relativamente forte.
 
 Per valutare la significatività statistica del valore ricavato verrà costruito un sistema di ipotesi e testato utilizzando una procedura bootstrap che verrà introdotta in seguito.
 
@@ -939,7 +976,9 @@ Per valutare la significatività statistica del valore ricavato verrà costruito
 
 ### Moran's scatterplot
 
-Questo è un diagramma a dispersione Moran che mostra la relazione tra i valori degli attributi stessi (asse orizzontale) e il valore dell'attributo medio locale (ovvero il valore medio delle posizioni adiacenti). Questo grafico ha quattro regioni: il quadrante in basso a sinistra contiene casi in cui il valore dell'attributo in ciascun poligono e il valore dell'attributo medio dei poligoni vicini sono inferiori alla media globale; il quadrante in alto a destra contiene casi in cui sia il valore dell'attributo che la media locale sono maggiori della media globale; e gli altri due quadranti contengono casi in cui il valore dell'attributo e la media locale si trovano su lati opposti della media globale. Le posizioni che si trovano nei quadranti in basso a sinistra e in alto a destra sono quelle che contribuiscono all'autocorrelazione positiva complessiva, poiché hanno un valore di attributo simile a quello dei loro vicini, mentre le posizioni negli altri due quadranti contribuiscono a un'autocorrelazione negativa. Se la maggior parte delle posizioni si trova nei quadranti in basso a sinistra e in alto a destra, allora il risultato sarà probabilmente un valore positivo dell'I di Moran, cioè un'autocorrelazione positiva.
+Uno strumento utile nell'analisi dell' autocorrelazione spaziale è il Moran scatterplot.
+
+Tale scatterplot mostra la relazione tra i valori degli attributi stessi (asse orizzontale) e il valore dell'attributo medio locale (ovvero il valore medio delle posizioni associate agli attributi stessi). Come si vede sotto, possiamo dividere lo scatterplot in quattro regioni: il quadrante in basso a sinistra contiene casi in cui il valore dell'attributo in ciascun poligono e il valore dell'attributo medio dei poligoni vicini sono inferiori alla media globale; il quadrante in alto a destra contiene casi in cui sia il valore dell'attributo che la media locale sono maggiori della media globale; e gli altri due quadranti contengono casi in cui il valore dell'attributo e la media locale si trovano su lati opposti della media globale. Le posizioni che si trovano nei quadranti in basso a sinistra e in alto a destra sono quelle che contribuiscono all'autocorrelazione positiva complessiva, poiché hanno un valore di attributo simile a quello dei loro vicini, mentre le posizioni negli altri due quadranti contribuiscono a un'autocorrelazione negativa. Se la maggior parte delle posizioni si trova nei quadranti in basso a sinistra e in alto a destra, allora il risultato sarà un valore positivo dell'I di Moran, cioè un'autocorrelazione positiva.
 
 
 ```{r}
@@ -1076,18 +1115,19 @@ ui <- fluidPage(
         ### Adicenze
         
         #Metodo semplice QUEEN
-        
-        
-        if(input$method1 == "Queen"){
+          if(input$method1 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         }
         
-        
+
         
         if(input$method1 == "Nearest"){
           wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
-        
+      
         
         #Metodo distance based
         if (input$method1 == "Distance"){
@@ -1096,22 +1136,10 @@ ui <- fluidPage(
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
-        # Scelta dei pesi: binaria o pesata con distanze
-        # B = Binary
-        # W = Row standardized
-        # C= Globally standardized
-        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
-        
-        
-        
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
 
         
              n <- length(OGR.prov)
@@ -1151,18 +1179,19 @@ ui <- fluidPage(
         ### Adicenze
         
         #Metodo semplice QUEEN
-        
-        
-        if(input$method1 == "Queen"){
+             if(input$method1 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         }
         
-        
+
         
         if(input$method1 == "Nearest"){
           wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
-        
+      
         
         #Metodo distance based
         if (input$method1 == "Distance"){
@@ -1171,23 +1200,10 @@ ui <- fluidPage(
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
-        # Scelta dei pesi: binaria o pesata con distanze
-        # B = Binary
-        # W = Row standardized
-        # C= Globally standardized
-        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
-        
-        
-        
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-
         
       n <- length(OGR.prov)
       z <- input$red5
@@ -1212,7 +1228,7 @@ ui <- fluidPage(
 
 
 
-Vale la pena notare che l'I di Moran è effettivamente il coefficiente di correlazione per la relazione tra i valori degli attributi e i valori degli attributi medi locali. L 'equazione per l'I di Moran viene riscritta in forma di matrice come: 
+Vale la pena notare che l'I di Moran è effettivamente il coefficiente di correlazione per la relazione tra i valori degli attributi e i valori degli attributi medi locali. L 'equazione per l'I di Moran può essere espressa in forma matriciale: 
 
 
 $$
@@ -1226,8 +1242,9 @@ $$
 $$
 
 
-ove y è il vettore della colonna le cui voci sono ciascuna (y i – y) $(y_i - y)$.
-Questa intuizione consente di utilizzare le statistiche diagnostiche standard della regressione lineare per associare i p-value ai valori osservati di I di Moran. Tuttavia, poiché la struttura spaziale della mappa è anche un parametro nell'analisi, un approccio più usuale si basa su una procedura Monte Carlo.
+dove y è il vettore colonna i cui elementi sono ciascuna $(y_i - y)$.
+Questa intuizione consente di utilizzare le statistiche diagnostiche standard della regressione lineare per associare i p-value ai valori osservati dell' I di Moran. Tuttavia, poiché la struttura spaziale della mappa è anch'essa un parametro nell'analisi, un approccio più usuale si basa su una procedura Monte Carlo.
+
 I valori degli attributi di posizione possono essere permutati per qualsiasi numero richiesto di volte , ovvero i valori degli attributi osservati nella mappa vengono assegnati in modo casuale alle posizioni della mappa e l'I di Moran viene ricalcolato ogni volta per la mappa generata dall'assegnazione casuale. Ciò fornisce una distribuzione empirica di campionamento per l'indice e consente all'I Moran osservato di essere valutato in termini di inusualità rispetto a questo benchmark randomizzato.
 
 
@@ -1438,7 +1455,7 @@ ui <- fluidPage(
                             choices = list("Queen","Distance","Nearest"),
                             selected = "Queen"),
                                 
-                numericInput(inputId = "k",
+                numericInput(inputId = "k1",
                              label = "N. of neighbour",
                              value = 2,
                              min=2,
@@ -1498,12 +1515,16 @@ ui <- fluidPage(
         
         if(input$method3 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          
         }
         
         
         
         if(input$method3 == "Nearest"){
-          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k1, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         
@@ -1514,24 +1535,9 @@ ui <- fluidPage(
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
-        
-        # Scelta dei pesi: binaria o pesata con distanze
-        # B = Binary
-        # W = Row standardized
-        # C= Globally standardized
-        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
-        
-        
-        
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-        
         
  
              z <- input$red6
@@ -1576,16 +1582,20 @@ ui <- fluidPage(
         ### Adicenze
         
         #Metodo semplice QUEEN
-        
+       
         
         if(input$method3 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          
         }
         
         
         
         if(input$method3 == "Nearest"){
-          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k1, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         
@@ -1596,27 +1606,9 @@ ui <- fluidPage(
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
-        
-        # Scelta dei pesi: binaria o pesata con distanze
-        # B = Binary
-        # W = Row standardized
-        # C= Globally standardized
-        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
-        
-        
-        
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-        
-        
-        
-        
         
         
         z <- input$red6
