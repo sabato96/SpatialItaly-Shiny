@@ -1360,7 +1360,7 @@ Moran.fun <- function(shape,x,wm){
     
 } 
   
-Moran.boot <- function(shape,x,wm,n.sim){
+Moran.perm <- function(shape,x,wm,n.sim){
     
     
     Morans <- NULL
@@ -1370,7 +1370,7 @@ Moran.boot <- function(shape,x,wm,n.sim){
     for (i in 1:n.sim){
       
       w.per <- wm[sample(nrow(wm)),sample(ncol(wm))]
-      
+      w.per <- (1/2)*(w.per+t(w.per))
       Morans[i] <- Moran.fun(shape,x,w.per)[[1]] 
       
     }
@@ -1483,8 +1483,8 @@ ui <- fluidPage(
 
     mainPanel(
 
-            mainPanel(plotlyOutput("bootstrap", width = 550, height = 600),
-                      div(style = "width:550px", verbatimTextOutput("bootstrap.text")))
+            mainPanel(plotlyOutput("perm", width = 550, height = 600),
+                      div(style = "width:550px", verbatimTextOutput("perm.text")))
             
     )
   )
@@ -1494,7 +1494,7 @@ ui <- fluidPage(
 
   server <- function(input,output) {
           
-  output$bootstrap <- renderPlotly({
+  output$perm <- renderPlotly({
       
       
       if(input$Run6 == 0)
@@ -1545,7 +1545,7 @@ ui <- fluidPage(
              
              
           
-             M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz)
+             M.boot <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
              
              print.moran(M.boot, boot = TRUE, plot = TRUE)
             
@@ -1566,7 +1566,7 @@ ui <- fluidPage(
     }) })
 
       
-  output$bootstrap.text <- renderPrint({
+  output$perm.text <- renderPrint({
       
       
       if(input$Run6 == 0)
@@ -1616,7 +1616,7 @@ ui <- fluidPage(
         
         
         
-        M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz)
+        M.boot <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
         
         print.moran(M.boot, boot = TRUE)
         

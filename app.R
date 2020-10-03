@@ -71,7 +71,7 @@ ui <- dashboardPage(
                ), 
 
       menuItem("Moran", tabName = "moran", icon = icon("th")), #5
-      menuItem("Bootstrap", tabName = "bootstrap", icon = icon("cog", lib = "glyphicon")) #6
+      menuItem("Permutation", tabName = "perm", icon = icon("cog", lib = "glyphicon")) #6
     )
   ),
 
@@ -385,7 +385,7 @@ fluidPage(
 #####    
    
     
-     tabItem(tabName = "bootstrap",
+     tabItem(tabName = "perm",
             sidebarLayout(
 #####              
               sidebarPanel(
@@ -423,8 +423,8 @@ fluidPage(
                   
                 ),
               
-              mainPanel(plotlyOutput("bootstrap", width = "100%", height = 600),
-                        verbatimTextOutput("bootstrap.text"))
+              mainPanel(plotlyOutput("perm", width = "100%", height = 600),
+                        verbatimTextOutput("perm.text"))
               
 #####              
               
@@ -576,12 +576,15 @@ server <- function(input, output) {
         
         if(input$method1 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         }
         
 
         
         if(input$method1 == "Nearest"){
           wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k1, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
       
         
@@ -592,6 +595,8 @@ server <- function(input, output) {
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -600,20 +605,7 @@ server <- function(input, output) {
         # C= Globally standardized
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
-        
 
-        
-        
-
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-
-        
-        
-        
-        
-        ###
                 
              n <- length(OGR.prov)
              z <- input$red5
@@ -659,12 +651,15 @@ server <- function(input, output) {
         
         if(input$method1 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         }
         
-
+        
         
         if(input$method1 == "Nearest"){
           wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k1, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         
@@ -675,22 +670,9 @@ server <- function(input, output) {
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
-        
-        # Scelta dei pesi: binaria o pesata con distanze
-        # B = Binary
-        # W = Row standardized
-        # C= Globally standardized
-        # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
-        
-        
-        
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
         
         
         
@@ -729,7 +711,7 @@ server <- function(input, output) {
   
 
   
-  output$bootstrap <- renderPlotly({
+  output$perm <- renderPlotly({
       
       
       if(input$Run6 == 0)
@@ -750,12 +732,16 @@ server <- function(input, output) {
         
         if(input$method3 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          
         }
         
         
         
         if(input$method3 == "Nearest"){
           wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         
@@ -766,6 +752,8 @@ server <- function(input, output) {
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -774,24 +762,13 @@ server <- function(input, output) {
         # C= Globally standardized
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
         
-        
-        
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-        
-        
- 
+
              z <- input$red6
              zz <- input$n.sim
              
              
           
-             M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz)
+             M.boot <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
              
              print.moran(M.boot, boot = TRUE, plot = TRUE)
             
@@ -812,7 +789,7 @@ server <- function(input, output) {
     }) })
 
       
-  output$bootstrap.text <- renderPrint({
+  output$perm.text <- renderPrint({
       
       
       if(input$Run6 == 0)
@@ -832,12 +809,16 @@ server <- function(input, output) {
         
         if(input$method3 == "Queen"){
           wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          
         }
         
         
         
         if(input$method3 == "Nearest"){
           wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k2, RANN=FALSE),row.names = OGR.prov.sub$seq)
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         
@@ -848,6 +829,8 @@ server <- function(input, output) {
           wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance1 * max(dsts.com),  
                                row.names = OGR.prov.sub@data$seq)
           dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+          wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+          wm.prov <- (1/2)*(wm.prov+t(wm.prov))
         }
         
         # Scelta dei pesi: binaria o pesata con distanze
@@ -855,28 +838,13 @@ server <- function(input, output) {
         # W = Row standardized
         # C= Globally standardized
         # S= Variance stabilizing scheme (Tiefelsdorf et al. 1999, p. 167-168)
-        
-        
-        
-        
-        
-        
-        
-        
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-        
-        
-        
-        
-        
-        
+
         z <- input$red6
         zz <- input$n.sim
         
         
         
-        M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz)
+        M.boot <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
         
         print.moran(M.boot, boot = TRUE)
         
