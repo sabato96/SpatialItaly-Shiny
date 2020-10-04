@@ -609,7 +609,8 @@
       "Weight" = deparse(substitute(wm)),
       "N.sim" = n.sim,
       "Boot sample" = as.vector(Morans),
-      "Boot interval" = interval))
+      "Boot interval" = interval,
+      "Significance" = alpha))
     
   }
   
@@ -621,6 +622,7 @@
     cat("Data: ", boot.list[[5]], "\n")                 
     cat("Weights: ", boot.list[[6]], "\n") # senza deparse(sub(..)) e con wm solo,  avremmo avuto una stringa di 01011010001 poichè mostrava gli elementi
     cat("N.sim: ", boot.list[[7]], "\n")
+    cat("Significance: ", boot.list[[10]], "\n")
     cat("\n")
     cat("Moran I statistic: ", boot.list[[1]], "\n") # cat fa un paste() degli argomenti in c("..","..","...")
     cat("Sample mean: ", boot.list[[2]], "\n") # \n significa a capo
@@ -634,7 +636,7 @@
       p <- ggplot(a, aes(x = Boot.sample)) + 
         geom_histogram(color = "black", fill = "white", binwidth=0.003) +
         geom_vline(aes(xintercept = boot.list[[9]][1]), color = "red", size = 1) +
-        geom_vline(aes(xintercept = boot.list[[9]][2]), color = "red", size = 1)
+        geom_vline(aes(xintercept = boot.list[[9]][2]), color = "red", size = 1) 
       
       p
       

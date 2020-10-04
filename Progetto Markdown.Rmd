@@ -1249,7 +1249,352 @@ I valori degli attributi di posizione possono essere permutati per qualsiasi num
 
 
 
-## Bootstrapping Moran's 
+## Bootstrap Moran's I
+
+```{r}
+
+Moran.fun <- function(shape,x,wm){
+    
+    n <- length(shape)
+    y <- shape[[etichette[x]]]
+    ybar <- mean(y, na.rm = TRUE)
+    
+    # Ora ci serve (yi - ybar)(yj - ybar)
+    
+    dy <- y - ybar # Scarto dalla media (vettore)
+    g <- expand.grid(dy, dy) # Combinazione del vettore
+    yiyj <- g[,1] * g[,2]
+    
+    pm <- matrix(yiyj, ncol = n) # Crea matrice da yiyj
+    
+    pmw <- pm * wm #pm * matrice dei pesi -> (yi - ybar)(yj - ybar)*wij
+    spwm <- sum(pmw) #Doppia sommatoria di -> (yi - ybar)(yj-ybar)*wij
+    smw <- sum(wm) #Somma dei pesi
+    sw <- spwm/smw #Doppia sommatoria "spwm" diviso somma dei pesi "smw"
+    vr <- n / sum(dy^2) # Prima parte della formula
+    
+    # Varianza
+    
+    S0 <- smw # Somma dei pesi
+    
+    a1 <- wm.prov + t(wm.prov) 
+    a2 <- rowSums(a1)^2
+    S2 <- sum(a2)
+    
+    b1 <- a1^2
+    S1 <- sum(b1)
+    
+    A <- n*((n^2-3*n+3)*S1-n*S2+3*S0^2)
+    D <- sum(dy^4)/(sum(dy^2))^2
+    B <- D*((n^2-n)*S1-2*n*S2+6*S0^2)
+    C <- (n-1)*(n-2)*(n-3)*S0^2
+    
+    m.sec <- (A-B)/C
+    
+    
+    
+    EI <- -1 /(n-1) # Valore atteso teorico sotto H0 cioè assenza di correlazione spaziale
+    MI <- vr * sw # Calcolo moran index
+    VI <- m.sec-EI^2
+    
+    
+    
+    #print(paste("Moran I",round(MI, digits = 7)))
+    #print(paste("Expected",round(EI, digits = 7)))
+    
+    
+    
+    
+    invisible(base::list(
+      "Moran" = MI,
+      "Expected" = EI,
+      "Variance" = VI,
+      "Shape" = deparse(substitute(shape)),
+      "Variable" = etichette[x],
+      "Weight" = deparse(substitute(wm))))
+    
+    #E' come return ma non printa ulteriormente il valore
+    
+    
+}
+
+Moran.boot <- function(shape,x,wm,n.sim,alpha=0.05){
+    
+    n <- length(shape)
+    y <- shape[[etichette[x]]]
+    
+    ya <- array(NA, dim=c(length(OGR.prov),1,n.sim))
+    Morans <- NULL
+    
+    for (i in 1:n.sim){
+      
+      ya[,,i] <- y[sample(1:length(y), length(y), replace = TRUE)]
+      #y <- as.vector(y[,1, drop=TRUE])
+    }
+    
+    for (i in 1:n.sim){
+      
+      y <- ya[,,i]
+      ybar <- mean(y, na.rm = TRUE)
+      
+      # Ora ci serve (yi - ybar)(yj - ybar)
+      
+      dy <- y - ybar # Scarto dalla media (vettore)
+      g <- expand.grid(dy, dy) # Combinazione del vettore
+      yiyj <- g[,1] * g[,2]
+      
+      pm <- matrix(yiyj, ncol = n) # Crea matrice da yiyj
+      
+      pmw <- pm * wm #pm * matrice dei pesi -> (yi - ybar)(yj - ybar)*wij
+      spwm <- sum(pmw) #Doppia sommatoria di -> (yi - ybar)(yj-ybar)*wij
+      smw <- sum(wm) #Somma dei pesi
+      sw <- spwm/smw #Doppia sommatoria "spwm" diviso somma dei pesi "smw"
+      vr <- n / sum(dy^2) # Prima parte della formula
+      
+      Morans[i] <- vr * sw
+    }
+    
+    sorted <- sort(Morans)
+    interval <- c(sorted[round(n.sim*alpha/2)],sorted[round(n.sim-n.sim*alpha/2)])
+    
+    m.list <- Moran.fun(shape,x,wm)
+    
+    invisible(base::list(
+      "Moran" = m.list[[1]],
+      "Expected" = mean(Morans),
+      "Variance" = sd(Morans)^2,
+      "Shape" = deparse(substitute(shape)),
+      "Variable" = etichette[x],
+      "Weight" = deparse(substitute(wm)),
+      "N.sim" = n.sim,
+      "Boot sample" = as.vector(Morans),
+      "Boot interval" = interval,
+      "Significance" = alpha))
+    
+  }
+  
+print.boot <- function(boot.list, plot=FALSE){
+    
+    cat("\n")
+    cat("               Moran's I Bootstrap   \n")
+    cat("Shape: ", boot.list[[4]], "\n") # deparse(substitute(x)) serve a far leggere il nome dell'oggetto nell'environment
+    cat("Data: ", boot.list[[5]], "\n")                 
+    cat("Weights: ", boot.list[[6]], "\n") # senza deparse(sub(..)) e con wm solo,  avremmo avuto una stringa di 01011010001 poichÃ¨ mostrava gli elementi
+    cat("N.sim: ", boot.list[[7]], "\n")
+    cat("Significance: ", boot.list[[10]], "\n")
+    cat("\n")
+    cat("Moran I statistic: ", boot.list[[1]], "\n") # cat fa un paste() degli argomenti in c("..","..","...")
+    cat("Sample mean: ", boot.list[[2]], "\n") # \n significa a capo
+    cat("Sample var: ", boot.list[[3]], "\n") 
+    cat("Bootstrap interval: ", boot.list[[9]], "\n")
+    
+    if(plot == TRUE){
+      
+      a <- as.data.frame(boot.list[8])
+      
+      p <- ggplot(a, aes(x = Boot.sample)) + 
+        geom_histogram(color = "black", fill = "white", binwidth=0.003) +
+        geom_vline(aes(xintercept = boot.list[[9]][1]), color = "red", size = 1) +
+        geom_vline(aes(xintercept = boot.list[[9]][2]), color = "red", size = 1) 
+      
+      p
+      
+    }
+    
+  }
+
+
+shinyApp(
+
+        
+ui <- fluidPage(
+
+  sidebarLayout(
+
+    # Sidebar panel per input ----
+    sidebarPanel(
+             
+            selectInput(inputId = "method19",
+                        label = "Choose adiacency method",
+                        choices = list("Queen","Distance","Nearest"),
+                        selected = "Queen"),
+            
+            numericInput(inputId = "k19",
+                         label = "N. of neighbour",
+                         value = 2,
+                         min=2,
+                         max=6),
+            
+            sliderInput(inputId = "distance19",
+                        label = "Choose distance",
+                        value = 1,
+                        min = 1.5,
+                        max = 5,
+                        step = 0.5),
+            
+            selectInput(inputId = "red19",
+                        label = "Choose a variable to display",
+                        choices = etichette,
+                        selected = ""),
+            
+            numericInput(inputId = "sign",
+                         label = "Significance level",
+                         value = 0.05,
+                         min = 0.005,
+                         max = 0.1,
+                         step = 0.005),
+            
+            
+            numericInput(inputId = "n.sim19",
+                         label = ("Choose n iteration"),
+                         value = "20"),
+            
+            actionButton("Run19", "Run code")
+
+    ),
+
+    mainPanel(
+
+          mainPanel(plotlyOutput("bootstr", width = "100%", height = 600),
+                    verbatimTextOutput("bootstr.text"))
+            
+    )
+  )
+),
+
+  server <- function(input,output) {
+  
+  output$bootstr <- renderPlotly({
+    
+    
+    if(input$Run19 == 0)
+      return()
+    isolate({
+    
+    
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method19 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method19 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method19 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red19
+      zz <- input$n.sim19
+      
+      
+      M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, alpha = input$sign)
+      
+      
+      print.boot(M.boot,plot=TRUE)
+      
+      
+      
+    
+    
+    
+  }) })
+  
+  output$bootstr.text <- renderPrint({
+    
+    
+    if(input$Run19 == 0)
+      return()
+    isolate({
+      
+      
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method19 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method19 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method19 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red19
+      zz <- input$n.sim19
+      
+      
+      M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, input$sign)
+      
+      
+      print.boot(M.boot)
+    
+  }) })
+  
+
+},
+
+options = list(height = 900)
+
+)
+
+```
+
+
+
+## Permutation test 
 
 Per valutare la singificatività dei risultati ottenuti in precedenza utilizzeremo un test "Permutation Bootstrap".
 

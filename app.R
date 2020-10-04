@@ -58,20 +58,21 @@ ui <- dashboardPage(
       
       menuItem("Introduction", tabName = "intro", icon = icon("dashboard")),
       
-      menuItem("Explorative", tabName = "explorative", icon = icon("dashboard"),
+      menuItem("Explorative", tabName = "explorative", icon = icon("certificate", lib = "glyphicon"),
                menuSubItem("Data Table", tabName = "table", icon = icon("dashboard")), #7,8
                menuSubItem("Circle Plot", tabName = "cirplot", icon = icon("dashboard")), #2
                menuSubItem("Violin Plot", tabName = "viol", icon = icon("dashboard")),#3
                menuSubItem("Correlogramm", tabName="Corr", icon=icon("dashboard"))#10,11,12,13
                ),
       
-      menuItem("Leaflet map", tabName = "leaflethome", icon = icon("dashboard"),
-               menuSubItem("Leaflet global", tabName = "leafletglobal", icon = icon("dashboard")), #4
-               menuSubItem("Leaflet local", tabName = "leafletlocal", icon = icon("dashboard")) #9
+      menuItem("Leaflet map", tabName = "leaflethome", icon = icon("globe", lib = "glyphicon"),
+               menuSubItem("Leaflet global", tabName = "leafletglobal", icon = icon("blackboard", lib = "glyphicon")), #4
+               menuSubItem("Leaflet local", tabName = "leafletlocal", icon = icon("blackboard", lib = "glyphicon")) #9
                ), 
 
       menuItem("Moran", tabName = "moran", icon = icon("th")), #5
-      menuItem("Permutation", tabName = "perm", icon = icon("cog", lib = "glyphicon")) #6
+      menuItem("Bootstrap", tabName = "bootstr", icon = icon("tasks",lib = "glyphicon")), #19
+      menuItem("Permutation Test", tabName = "perm", icon = icon("flash", lib = "glyphicon")) #6
     )
   ),
 
@@ -428,7 +429,61 @@ fluidPage(
               
 #####              
               
-              ))
+              )),
+
+
+tabItem(tabName = "bootstr",
+        sidebarLayout(
+          #####              
+          sidebarPanel(
+            
+            selectInput(inputId = "method19",
+                        label = "Choose adiacency method",
+                        choices = list("Queen","Distance","Nearest"),
+                        selected = "Queen"),
+            
+            numericInput(inputId = "k19",
+                         label = "N. of neighbour",
+                         value = 2,
+                         min=2,
+                         max=6),
+            
+            sliderInput(inputId = "distance19",
+                        label = "Choose distance",
+                        value = 1,
+                        min = 1.5,
+                        max = 5,
+                        step = 0.5),
+            
+            selectInput(inputId = "red19",
+                        label = "Choose a variable to display",
+                        choices = etichette,
+                        selected = ""),
+            
+            numericInput(inputId = "sign",
+                         label = "Significance level",
+                         value = 0.05,
+                         min = 0.005,
+                         max = 0.1,
+                         step = 0.005),
+            
+            
+            numericInput(inputId = "n.sim19",
+                         label = ("Choose n iteration"),
+                         value = "20"),
+            
+            actionButton("Run19", "Run code")
+            
+            
+          ),
+          
+          mainPanel(plotlyOutput("bootstr", width = "100%", height = 600),
+                    verbatimTextOutput("bootstr.text"))
+          
+          #####              
+          
+        ))
+
             )
     )
   )
@@ -768,9 +823,9 @@ server <- function(input, output) {
              
              
           
-             M.boot <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
+             M.perm <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
              
-             print.moran(M.boot, boot = TRUE, plot = TRUE)
+             print.moran(M.perm, boot = TRUE, plot = TRUE)
             
              
              # a <- cbind(OGR.prov[[z]],rep(mean(OGR.prov[[z]]), n= length(OGR.prov)))
@@ -844,9 +899,9 @@ server <- function(input, output) {
         
         
         
-        M.boot <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
+        M.perm <- Moran.perm(OGR.prov, which(etichette == z), wm.prov, zz)
         
-        print.moran(M.boot, boot = TRUE)
+        print.moran(M.perm, boot = TRUE)
         
         
         
@@ -866,8 +921,124 @@ server <- function(input, output) {
       }) })
   
   
-  
+  output$bootstr <- renderPlotly({
     
+    
+    if(input$Run19 == 0)
+      return()
+    isolate({
+    
+    
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method19 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method19 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method19 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red19
+      zz <- input$n.sim19
+      
+      
+      M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, alpha = input$sign)
+      
+      
+      print.boot(M.boot,plot=TRUE)
+      
+      
+      
+    
+    
+    
+  }) })
+  
+  output$bootstr.text <- renderPrint({
+    
+    
+    if(input$Run19 == 0)
+      return()
+    isolate({
+      
+      
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method19 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method19 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method19 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red19
+      zz <- input$n.sim19
+      
+      
+      M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, input$sign)
+      
+      
+      print.boot(M.boot)
+    
+  }) })
   
     
   output$table <- DT::renderDataTable({ 
