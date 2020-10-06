@@ -71,7 +71,10 @@ ui <- dashboardPage(
                ), 
 
       menuItem("Moran", tabName = "moran", icon = icon("th")), #5
-      menuItem("Bootstrap", tabName = "bootstr", icon = icon("tasks",lib = "glyphicon")), #19
+      menuItem("Bootstrap", tabName = "bootstrhome", icon = icon("tasks",lib = "glyphicon"),
+               menuSubItem("Classic Bootstrap", tabName = "bootstr", icon = icon("tasks", lib = "glyphicon")), #19
+               menuSubItem("Block Bootstrap", tabName = "blockbootstrap", icon = icon("tasks", lib = "glyphicon")) #21
+               ), 
       menuItem("Permutation Test", tabName = "perm", icon = icon("flash", lib = "glyphicon")) #6
     )
   ),
@@ -479,6 +482,58 @@ tabItem(tabName = "bootstr",
           
           mainPanel(plotlyOutput("bootstr", width = "100%", height = 600),
                     verbatimTextOutput("bootstr.text"))
+          
+          #####              
+          
+        )),
+
+tabItem(tabName = "blockbootstrap",
+        sidebarLayout(
+          #####              
+          sidebarPanel(
+            
+            selectInput(inputId = "method20",
+                        label = "Choose adiacency method",
+                        choices = list("Queen","Distance","Nearest"),
+                        selected = "Queen"),
+            
+            numericInput(inputId = "k20",
+                         label = "N. of neighbour",
+                         value = 2,
+                         min=2,
+                         max=6),
+            
+            sliderInput(inputId = "distance20",
+                        label = "Choose distance",
+                        value = 1,
+                        min = 1.5,
+                        max = 5,
+                        step = 0.5),
+            
+            selectInput(inputId = "red20",
+                        label = "Choose a variable to display",
+                        choices = etichette,
+                        selected = ""),
+            
+            numericInput(inputId = "sign20",
+                         label = "Significance level",
+                         value = 0.05,
+                         min = 0.005,
+                         max = 0.1,
+                         step = 0.005),
+            
+            
+            numericInput(inputId = "n.sim20",
+                         label = ("Choose n iteration"),
+                         value = "20"),
+            
+            actionButton("Run20", "Run code")
+            
+            
+          ),
+          
+          mainPanel(plotlyOutput("blockplot", width = "100%", height = 600),
+                    verbatimTextOutput("blocktext"))
           
           #####              
           
@@ -1040,7 +1095,131 @@ server <- function(input, output) {
     
   }) })
   
+  output$blockplot <- renderPlotly({
     
+    
+    if(input$Run20 == 0)
+      return()
+    isolate({
+      
+      
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method20 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method20 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k20, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method20 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance20 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red20
+      zz <- input$n.sim20
+      
+      
+      M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign20)
+      
+      
+      block.print(M.boot,plot=TRUE)
+      
+      
+      
+      
+      
+      
+    }) })
+  
+  output$blocktext <- renderPrint({
+    
+    
+    if(input$Run20 == 0)
+      return()
+    isolate({
+      
+      
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method20 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method20 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k20, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method20 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance20 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red20
+      zz <- input$n.sim20
+      
+      
+      M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign20)
+      
+      
+      block.print(M.boot)
+      
+      
+      
+      
+      
+      
+    }) })
+  
+
   output$table <- DT::renderDataTable({ 
       
     

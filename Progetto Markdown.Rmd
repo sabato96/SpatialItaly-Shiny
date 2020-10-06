@@ -1250,6 +1250,55 @@ I valori degli attributi di posizione possono essere permutati per qualsiasi num
 
 
 ## Bootstrap Moran's I
+Il bootstrap è una tecnica statistica di ricampionamento con reimmissione per approssimare la distribuzione campionaria di una statistica. Permette perciò di approssimare media e varianza di uno stimatore, costruire intervalli di confidenza e calcolare p-value di test quando, in particolare, non si conosce la distribuzione della statistica di interesse.
+ 
+Dato un campione di numerosità $n$, $X=\{x_1,x_2,...,x_n\}$, e una generica statistica $f()$, abbiamo implementato due tipologie di bootstrap, classico e a blocchi.
+
+### Bootstrap classico
+
+La procedura bootstrap "classica" si articola nelle seguenti fasi:
+
+* Generare un campione bootstrap $\tilde{X}_{(i)}$ estraendo con reimmissione $n$ elementi dal campione $X$. E' bene precisare che, trattandosi di campionamento con reimmissione, il campione bootstrap $\tilde{X}_{(i)}$ potrà presentare la stessa osservazione più volte o non contenere alcune delle osservazioni presenti nel campione iniziale $X$.
+
+* Calcolare la statistica $f_{(i)}=f(\tilde{X}_{(i)})$ utilizzando il campione bootstrap.
+
+* Ripetere gli step precedenti per un considerevole numero di volte, per esempio per $i=1,...,10000$. Per ogni iterazione salvare la statistica calcolata in modo da avere un campione $\{ f_{(1)},...,f_{(10000)} \}$.
+
+A questo punto possiamo utilizzare $\{ f_{(1)},...,f_{(10000)} \}$ come apporssimazione della distribuzione di probabilità della statistica $f()$ e di conseguenza derivare un intervallo di confidenza. Esistono varie tipologie di intervalli di confidenza bootstrap. Nel corso di questo lavoro abbiamo utilizzato il cosiddetto metodo "percentile bootstrap".
+
+Tale metodo consiste nel calcolare un intervallo di confidenza semplicemente individuando i quantili della distribuzione empirica $\{ f_{(1)},...,f_{(10000)} \}$, dato il livello di significatività scelto $\alpha$. Una volta calcolati, i quantili saranno essi stessi gli estremi dell' intervallo di confidenza bootstrap.
+
+Nel nostro caso, quindi, il campione osservato consiste nelle osservazioni di un determinato reddito per ogni provincia italiana, quindi un campione di numerosità 110. Dato tale campione, abbiamo effettuato un ricampionamento bootstrap e calcolato l'indice di Moran per ogni iterazione (in tal caso la generica statistica $f()$ definita in precedenza è proprio l'indice di Moran).
+Abbiamo implementato la procedura di ricampionamento attraverso la funzione sample di R. La funzione da noi definita al fine di ottenere il campione bootstrap è "Moran.boot", che provvede anche al calcolo dell'intervallo di confidenza secondo la procedura esposta in precedenza.
+Una volta salvato l'output della funzione Moran.boot è stato possibile ottenere un istrogramma di frequenza e un summary dei risultati utilizzando la funzione print.boot.
+I risultati sono consultabili nell'app shiny di cui sotto, alla sezione "Classic".
+
+E' facile notare come in questo caso l'intervallo di confidenza trovato non rappresenta un risultato soddisfacente. Questo poichè le unità spaziali considerate sono tra di loro dipendenti e questo fa nascere dei problemi riguardo le assunzioni classiche del bootstrap.
+
+Al fine di migliorare i risultati ottenuti abbiamo implementato una procedura nota come "Bootstrap a blocchi" di cui tratteremo nel seguito.
+
+
+### Bootstrap a blocchi
+
+Visto che i dati osservati sono dipendenti, un'alternativa valida per derivare la distribuzione dell'indice di Moran consiste nell'utilizzare la tecnica del bootstrap a blocchi.
+
+Tale tecnica consiste nel dividere il campione in blocchi che, ragionevolmente, godono di indipendenza reciproca ma sono formati da osservazioni che sono tra di loro dipendenti. Pertanto la dipendenza è presente tra elementi appartenenti allo stesso blocco, garantendo, in linea teorica, l'indipendeza reciproca tra i blocchi. Ovviamente l'accuratezza dei risultati dipende necessariamente dalla scelta della dimensione dei blocchi. In letteratura non è ancora stato individuato un metodo ottimale per la scelta della dimensione, pertanto ci siamo limitati a scegliere una dimensione arbitraria pari a 10 unità. 
+Pertanto la struttura dei blocchi sarà la seguente:
+
+$$
+\{ x_1,...,x_{10} \} \ ; \{ x_{11},...,x_{20} \} \ ... \{x_{101},...,x_{110}\}
+$$
+La procedura in sè non si discosta molto da quella classica, con la differenza che in questo caso l'estrazione con reimmisione avrà ad oggetto i blocchi e non più le singole osservazioni. 
+
+Ad ogni iterazione, quindi:
+
+* Vengono estratti 11 blocchi in modo da ripristinare la numerosità del campione originario.
+
+* Viene calcolato l'indice di Moran sulla base del campione ottenuto al passo precedente
+
+
+Mediante tale procedura otterremo un campione $\{ f_{(1)},...,f_{(10000)} \}$ attraverso cui calcolare l'intervallo di confidenza bootstrap. Il metodo per ottenere gli estremi dell'intervallo è quello esposto in precedenza, cioè il "percentile bootstrap".
+
 
 ```{r}
 
@@ -1404,6 +1453,259 @@ print.boot <- function(boot.list, plot=FALSE){
   }
 
 
+block.boot <- function(x,wm,n.sim,alpha=0.05){
+    
+    
+    
+    a <- array(NA,dim = c(10,1,11))
+    
+    #Creazione blocchi
+    #####
+    
+    # Primo blocco Piemonte+v.daosta+varese
+    a[,,1] <- subset(OGR.prov, DEN_PCM == "Aosta" |
+                       DEN_PCM == "Torino" | 
+                       DEN_PCM == "Asti" |
+                       DEN_PCM == "Vercelli" |
+                       DEN_PCM == "Biella" | 
+                       DEN_PCM == "Verbano-Cusio-Ossola" |
+                       DEN_PCM == "Alessandria" |
+                       DEN_PCM == "Cuneo" | 
+                       DEN_PCM == "Novara" |
+                       DEN_PCM == "Varese")[[etichette[x]]]
+    
+    
+    # 2o blocco, lombardia tranne mantova e brescia
+    a[,,2] <- subset(OGR.prov, DEN_PCM == "Monza e della Brianza" |
+                       DEN_PCM == "Como" | 
+                       DEN_PCM == "Lecco" |
+                       DEN_PCM == "Sondrio" |
+                       DEN_PCM == "Cremona" | 
+                       DEN_PCM == "Bergamo" |
+                       DEN_PCM == "Milano" |
+                       DEN_PCM == "Pavia" | 
+                       DEN_PCM == "Lodi" |
+                       DEN_PCM == "Brescia")[[etichette[x]]]
+    
+    # 3o blocco 
+    a[,,3] <- subset(OGR.prov, DEN_PCM == "Mantova" | 
+                       DEN_PCM == "Venezia" | 
+                       DEN_PCM == "Bolzano" |
+                       DEN_PCM == "Trento" |
+                       DEN_PCM == "Belluno" | 
+                       DEN_PCM == "Udine" |
+                       DEN_PCM == "Pordenone" |
+                       DEN_PCM == "Gorizia" | 
+                       DEN_PCM == "Trieste" |
+                       DEN_PCM == "Treviso")[[etichette[x]]]
+    # 4o blocco
+    a[,,4] <- subset(OGR.prov, DEN_PCM == "Imperia" |
+                       DEN_PCM == "Vicenza" | 
+                       DEN_PCM == "Verona" |
+                       DEN_PCM == "Padova" |
+                       DEN_PCM == "Rovigo" | 
+                       DEN_PCM == "Ferrara" |
+                       DEN_PCM == "Ravenna" |
+                       DEN_PCM == "Forli'-Cesena" | 
+                       DEN_PCM == "Modena" |
+                       DEN_PCM == "Bologna")[[etichette[x]]]
+    
+    #11o blocco
+    a[,,11] <- subset(OGR.prov, DEN_PCM == "Livorno" |
+                        DEN_PCM == "Savona" | 
+                        DEN_PCM == "Genova" |
+                        DEN_PCM == "La Spezia" |
+                        DEN_PCM == "Piacenza" | 
+                        DEN_PCM == "Parma" |
+                        DEN_PCM == "Reggio nell'Emilia" |
+                        DEN_PCM == "Massa Carrara" | 
+                        DEN_PCM == "Lucca" |
+                        DEN_PCM == "Pistoia")[[etichette[x]]]
+    
+    #5o blocco
+    a[,,5] <- subset(OGR.prov, DEN_PCM == "Perugia" |
+                       DEN_PCM == "Pisa" | 
+                       DEN_PCM == "Prato" |
+                       DEN_PCM == "Firenze" |
+                       DEN_PCM == "Arezzo" | 
+                       DEN_PCM == "Siena" |
+                       DEN_PCM == "Grosseto" |
+                       DEN_PCM == "Rimini" | 
+                       DEN_PCM == "Pesaro e Urbino" |
+                       DEN_PCM == "Ancona")[[etichette[x]]]
+    
+    #6o blocco
+    a[,,6] <- subset(OGR.prov, DEN_PCM == "Frosinone" |
+                       DEN_PCM == "Terni" | 
+                       DEN_PCM == "Viterbo" |
+                       DEN_PCM == "Macerata" |
+                       DEN_PCM == "Fermo" | 
+                       DEN_PCM == "Ascoli Piceno" |
+                       DEN_PCM == "Rieti" |
+                       DEN_PCM == "Pescara" | 
+                       DEN_PCM == "Teramo" |
+                       DEN_PCM == "L'Aquila")[[etichette[x]]]
+    #7o blocco
+    a[,,7] <- subset(OGR.prov, DEN_PCM == "Roma" |
+                       DEN_PCM == "Latina" | 
+                       DEN_PCM =="Campobasso" |
+                       DEN_PCM == "Caserta" |
+                       DEN_PCM == "Benevento" | 
+                       DEN_PCM == "Napoli" |
+                       DEN_PCM == "Avellino" |
+                       DEN_PCM == "Salerno" | 
+                       DEN_PCM == "Chieti" |
+                       DEN_PCM == "Isernia")[[etichette[x]]]
+    
+    #8o blocco
+    a[,,8] <- subset(OGR.prov, DEN_PCM == "Crotone" |
+                       DEN_PCM == "Foggia" | 
+                       DEN_PCM == "Barletta-Andria-Trani" |
+                       DEN_PCM == "Bari" |
+                       DEN_PCM == "Brindisi" | 
+                       DEN_PCM == "Lecce" |
+                       DEN_PCM == "Taranto" |
+                       DEN_PCM == "Matera" | 
+                       DEN_PCM == "Potenza" |
+                       DEN_PCM == "Cosenza")[[etichette[x]]]
+    
+    #9o blocco
+    a[,,9] <- subset(OGR.prov, DEN_PCM == "Palermo" |
+                       DEN_PCM == "Catanzaro" | 
+                       DEN_PCM == "Vibo Valentia" |
+                       DEN_PCM == "Reggio di Calabria" |
+                       DEN_PCM == "Messina" | 
+                       DEN_PCM == "Catania" |
+                       DEN_PCM == "Siracusa" |
+                       DEN_PCM == "Ragusa" | 
+                       DEN_PCM == "Caltanissetta" |
+                       DEN_PCM == "Enna")[[etichette[x]]]
+    
+    #10o blocco
+    a[,,10] <- subset(OGR.prov, DEN_PCM == "Medio Campidano"  |
+                        DEN_PCM == "Agrigento" | 
+                        DEN_PCM == "Trapani" |
+                        DEN_PCM == "Olbia-Tempio" |
+                        DEN_PCM == "Sassari" | 
+                        DEN_PCM == "Nuoro" |
+                        DEN_PCM == "Ogliastra" |
+                        DEN_PCM == "Cagliari" | 
+                        DEN_PCM == "Oristano" |
+                        DEN_PCM == "Carbonia-Iglesias")[[etichette[x]]]
+    
+    
+    ######
+    
+    
+    n <- 110
+    
+    Morans <- NULL
+    yx <- array(NA,dim=c(110,1,n.sim))
+    
+    
+    for(i in 1:n.sim){
+      
+      yx[,,i] <- c(as.vector(a[,,sample(1:11,11,replace=TRUE)]))
+      
+    }
+    
+    
+    for (i in 1:n.sim){
+      
+      y <- yx[,,i]
+      ybar <- mean(y, na.rm = TRUE)
+      
+      # Ora ci serve (yi - ybar)(yj - ybar)
+      
+      dy <- y - ybar # Scarto dalla media (vettore)
+      g <- expand.grid(dy, dy) # Combinazione del vettore
+      yiyj <- g[,1] * g[,2]
+      
+      pm <- matrix(yiyj, ncol = n) # Crea matrice da yiyj
+      
+      pmw <- pm * wm #pm * matrice dei pesi -> (yi - ybar)(yj - ybar)*wij
+      spwm <- sum(pmw) #Doppia sommatoria di -> (yi - ybar)(yj-ybar)*wij
+      smw <- sum(wm) #Somma dei pesi
+      sw <- spwm/smw #Doppia sommatoria "spwm" diviso somma dei pesi "smw"
+      vr <- n / sum(dy^2) # Prima parte della formula
+      
+      Morans[i] <- vr * sw
+    }
+    
+    m.list <- Moran.fun(OGR.prov,x,wm)
+    
+    
+    ### Intervallo con differenze
+    delta.boot <- sort(Morans-m.list[[1]])
+    perc.delta <- c(delta.boot[round(n.sim*alpha/2)],delta.boot[round(n.sim-n.sim*alpha/2)])
+    
+    basic.interval <- c(m.list[[1]]-perc.delta[2],m.list[[1]]-perc.delta[1])
+    
+    
+    #Intervallo studentizzato
+    
+    stud <- sqrt(110)*delta.boot*(1/sd(Morans))
+    perc.stud <- c(stud[round(n.sim*alpha/2)],stud[round(n.sim-n.sim*alpha/2)])
+    stud.interval <- c(m.list[[1]]+(perc.stud[1]*sd(Morans)),m.list[[1]]+(perc.stud[2]*sd(Morans)))
+    
+    
+    #Intervallo diretto (percentile bootstrap) 
+    sorted <- sort(Morans)
+    percentile.boot <- c(sorted[round(n.sim*alpha/2)],sorted[round(n.sim-n.sim*alpha/2)])
+    
+    
+    
+    invisible(base::list(
+      "Moran" = m.list[[1]],
+      "Expected" = mean(Morans),
+      "Variance" = sd(Morans)^2,
+      "Shape" = m.list[[4]],
+      "Variable" = etichette[x],
+      "Weight" = deparse(substitute(wm)),
+      "N.sim" = n.sim,
+      "Boot sample" = as.vector(Morans),
+      "Boot percentile interval" = percentile.boot,
+      "Boot basic interval" = basic.interval,
+      "Boot student interval" = stud.interval,
+      "Significance" = alpha))
+    
+  }
+  
+block.print <- function(block.list, plot=FALSE){
+    
+    
+    cat("\n")
+    cat("               Moran's I block bootstrap   \n")
+    cat("Shape: ", block.list[[4]], "\n") # deparse(substitute(x)) serve a far leggere il nome dell'oggetto nell'environment
+    cat("Data: ", block.list[[5]], "\n")                 
+    cat("Weights: ", block.list[[6]], "\n") # senza deparse(sub(..)) e con wm solo,  avremmo avuto una stringa di 01011010001 poich mostrava gli elementi
+    cat("N.sim: ", block.list[[7]], "\n")
+    cat("Significance: ", block.list[[12]], "\n")
+    cat("\n")
+    cat("Moran I statistic: ", block.list[[1]], "\n") # cat fa un paste() degli argomenti in c("..","..","...")
+    cat("Sample mean: ", block.list[[2]], "\n") # \n significa a capo
+    cat("Sample var: ", block.list[[3]], "\n") 
+    cat("Percentile interval: ", block.list[[9]], "\n")
+    cat("Basic-boot interval: ", block.list[[10]], "\n")
+    cat("Studentized interval: ", block.list[[11]], "\n")
+    
+    
+    if(plot==TRUE){
+      
+      a <- as.data.frame(block.list[8])
+      
+      p <- ggplot(a, aes(x = Boot.sample)) + 
+        geom_histogram(color = "black", fill = "white", binwidth=0.003) +
+        geom_vline(aes(xintercept = block.list[[9]][1]), color = "red", size = 1) +
+        geom_vline(aes(xintercept = block.list[[9]][2]), color = "red", size = 1) +
+        geom_vline(aes(xintercept = block.list[[1]]), color = "blue", size = 1)
+      
+      p
+      
+    }
+  }
+  
+
 shinyApp(
 
         
@@ -1448,15 +1750,21 @@ ui <- fluidPage(
             numericInput(inputId = "n.sim19",
                          label = ("Choose n iteration"),
                          value = "20"),
+            br(),
             
-            actionButton("Run19", "Run code")
+            actionButton("Run19", "Run classic"),
+            actionButton("Run20", "Run block")
 
     ),
 
     mainPanel(
+      tabsetPanel(type="tabs",
 
-          mainPanel(plotlyOutput("bootstr", width = "100%", height = 600),
-                    verbatimTextOutput("bootstr.text"))
+          tabPanel("Classic",plotlyOutput("bootstr", width = "100%", height = 600),
+                    verbatimTextOutput("bootstr.text")),
+          tabPanel("Block",plotlyOutput("blockboot", width = "100%", height = 600),
+                    verbatimTextOutput("blockboot.text"))
+          )
             
     )
   )
@@ -1583,6 +1891,130 @@ ui <- fluidPage(
     
   }) })
   
+  
+  output$blockboot <- renderPlotly({
+    
+    
+    if(input$Run20 == 0)
+      return()
+    isolate({
+      
+      
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method19 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method19 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method19 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red19
+      zz <- input$n.sim19
+      
+      
+      M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign)
+      
+      
+      block.print(M.boot,plot=TRUE)
+      
+      
+      
+      
+      
+      
+    }) })
+  
+  output$blockboot.text <- renderPrint({
+    
+    
+    if(input$Run20 == 0)
+      return()
+    isolate({
+      
+      
+      
+      OGR.prov.sub <- OGR.prov[]
+      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
+      xy.sub <- coordinates(OGR.prov.sub)
+      
+      ### Adicenze
+      
+      #Metodo semplice QUEEN
+      
+      
+      if(input$method19 == "Queen"){
+        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        
+      }
+      
+      
+      
+      if(input$method19 == "Nearest"){
+        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      #Metodo distance based
+      if (input$method19 == "Distance"){
+        
+        
+        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
+                             row.names = OGR.prov.sub@data$seq)
+        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
+        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
+        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
+      }
+      
+      
+      
+      z <- input$red19
+      zz <- input$n.sim19
+      
+      
+      M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign)
+      
+      
+      block.print(M.boot)
+      
+      
+      
+      
+      
+      
+    }) })
 
 },
 
@@ -1596,7 +2028,7 @@ options = list(height = 900)
 
 ## Permutation test 
 
-Per valutare la singificatività dei risultati ottenuti in precedenza utilizzeremo un test "Permutation Bootstrap".
+E' possibile costruire un test d'ipotesi per valutare se la distribuzione spaziale dei dati è random o se è presente autocorrelazione spaziale.
 
 Dato un sistema di ipotesi:
 
@@ -1604,6 +2036,7 @@ $$
 \begin{cases} H_0: Distribuzione \ random \ dei \ dati  \\ 
 H_1: Distribuzione \ dipende \ dalle \ unità \ adiacenti  \end{cases}
 $$
+Come in ogni test d'ipotesi bisogna trovare la distribuzione della statistica sotto l'ipotesi nulla. 
 
 Per trovare la distribuzione di qualsiasi misura di autocorrelazione spaziale bisognerebbe calcolare tale misura per ogni possibile combinazione spaziale dei dati.
 Tale ri-assegnazione dei valori è chiamata permutazione. Date n unità spaziali, il numero di permutazioni possibili è:
@@ -1612,30 +2045,17 @@ $$
 n!=n\ (n-1)\ (n-2)\ ...\ (2)\ (1)
 $$
 
-E' chiaro che non è possibile valutare tutte le permutazioni poichè per un n sufficientemente elevato le possibili permutazioni aumentano a dismisura. Pertanto estrarremo in modo casuale da tutte le possibili permutazioni un numero sufficientemente elevato. 
-La distribuzione dell' I di Moran per un campione sufficientemente elevato di permutazioni è considerata una stima affidabile della vera distribuzione della statistica considerata.
+E' chiaro che non è possibile valutare tutte le permutazioni poichè per un $n$ sufficientemente elevato le possibili permutazioni aumentano a dismisura. Pertanto estrarremo in modo casuale un numero sufficientemente elevato di permutazioni da quelle possibili. 
 
+La differenza principale tra questa procedura e quella bootstrap è che l'analisi di permutazione ci permette di derivare la distribuzione sotto l'ipotesi nulla, poichè, per come è costruita, distrugge qualsiasi legame tra il valore del reddito e la sua posizione nello spazio. In questo modo possiamo derivare la distribuzione dell'indice di Moran sotto l'ipotesi nulla, cioè sotto l'ipotesi che la distribuzione spaziale dei dati sia casuale. 
 
+Nello specifico, considerando il set di dati $\{x_i,y_i \}$, la permutazione consiste nel permutare le $x_i$, cioè il valore del reddito per l'i-esima provincia, rispetto ad $y_i$, cioè la posizione della provincia nello spazio, così che ogni relazione tra le due variabili venga distrutta. 
 
-$$
-\begin{equation}
-E[I^{2}] = \frac{A-B}{C} \\
-A = n\Big[(n^{2}-3n+3)S_{1} - nS_{2}+3S^{2}_{0}\Big] \\
-B = D\Big[(n^{2}-n)S_{1}-2nS_{2}+6S^{2}_{0}\Big] \\
-C = (n-1)(n-2)(n-3)S^{2}_{0} \\
+Abbiamo implementato la procedura di cui sopra semplicemente permutando (tramite la funzione sample) righe e colonne della matrice spaziale $\textbf{W}$. Così facendo i valori delle unità spaziali sono stati riassegnati casualmente ad altre unità spaziali, distruggendo le relazioni che intercorrevano tra posizione nello spazio e valore del reddito.
 
-D = \frac{\sum_{i=1}^{n} z^{4}_{i} }
-{\Big(\sum_{i=1}^{n} z^{2}_{i} \Big)^{2}} \\
+Tale procedura è stata ripetuta $n$ volte e ad ogni iterazione è stato calcolato l'indice di Moran corrispondente all' i-esima permutazione, ottenendo così un campione di numerosità $n$ di indici di Moran. Tale distribuzione campionaria rappresenta quindi un'approssimazione della distribuzione reale dell'indice di Moran per dati spaziali distribuiti casualmente. Questa è quindi la distribuzione sotto l'ipotesi nulla che cercavamo.
 
-S_{0} = \sum_{i=1}^{n}\sum_{j=1}^{n}  w_{i,j}   \\
-
-S_{1} = (1/2)\sum_{i=1}^{n}\sum_{j=1}^{n} \big(w_{i,j} + w_{j,i}\big)^{2} \\
-
-S_{2} = \sum_{i=1}^{n} \Big( 
-\sum_{j=1}^{n} w_{i,j} + \sum_{j=1}^{n} w_{j,i}
-\Big)^{2}
-\end{equation}
-$$
+A questo punto possiamo confrontare il valore dell'indice di Moran effettivo, calcolato sul campione, con la distribuzione sotto l'ipotesi nulla e valutare quindi se rigettare o accettare l'ipotesi alternativa.
 
 
 ```{r}
@@ -2004,6 +2424,7 @@ ui <- fluidPage(
 #knitr::kable(dist.table,caption = "Distance")
 #knitr::kable(near.table,caption = "Neighbour")
 knitr::kable(all.table,caption = "Empirical Results", align = "cccccccccc", digits = 4, "pipe")
+knitr::kable(all.interval,caption = "Conf. Interval (block bootstrap)",digits = 4, "pipe")
 ```
 
 
