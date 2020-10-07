@@ -17,3 +17,18 @@ https://drive.google.com/file/d/11S8tJoGRcrsCs4Sh5T3_e6PLnnvrKNuO/view?usp=shari
 
 
 
+2. .Rdata: Contiene l'environement necessario al funzionamento (Tale environment è stato generato dal "source script.R")
+
+3. app.R : Applicazione shiny
+
+4. Progetto Markdown: Documento interattivo RMarkdown contenente tesina e widget shiny
+
+5. blocco e table generator: Genera blocchi per block bootstrap e genera tabelle contenenti i risultati dell'analisi. 
+	Queste tabelle sono poi state inserite alla fine del file RMarkdown
+
+6. biblio.bib : Contiene riferimenti bibliografici utilizzati in RMarkdown
+
+7. footer,header : Rispettivamente footer e header in html utilizzati in RMarkdown
+
+
+
