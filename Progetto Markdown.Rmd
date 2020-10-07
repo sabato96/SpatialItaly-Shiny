@@ -2424,7 +2424,7 @@ ui <- fluidPage(
 #knitr::kable(dist.table,caption = "Distance")
 #knitr::kable(near.table,caption = "Neighbour")
 knitr::kable(all.table,caption = "Empirical Results", align = "cccccccccc", digits = 4, "pipe")
-knitr::kable(all.interval,caption = "Conf. Interval (block bootstrap)",digits = 4, "pipe")
+knitr::kable(all.interval,caption = "Conf. Interval (block bootstrap)", "pipe")
 ```
 
 

@@ -1277,6 +1277,7 @@
   
 ## Estrazione intervallo di confidenza
 
+  
 boot.generator <- function(OGR.prov,method="Queen",red,dist=1,k=2){
     OGR.prov.sub <- OGR.prov[]
     OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
@@ -1469,7 +1470,22 @@ colnames(all.interval) <- c("q.l","q.u","d2.l","d2.u","d3.l","d3.u",
                             "k2.l","k2.u","k3.l","k3.u",
                             "k4.l","k4.u","k5.l","k5.u","k6.l","k6.u")
   
-  
+all.interval <- round(all.interval, digits = 4)
+all.interval <- all.interval %>%
+                 unite("q",c("q.l","q.u"),sep =" _ ") %>%
+                 unite("d2",c("d2.l","d2.u"),sep =" _ ") %>%
+                 unite("d3",c("d3.l","d3.u"),sep =" _ ") %>%
+                 unite("d4",c("d4.l","d4.u"),sep =" _ ") %>%
+                 unite("d5",c("d5.l","d5.u"),sep =" _ ") %>%
+                 unite("k2",c("k2.l","k2.u"),sep =" _ ") %>%
+                 unite("k3",c("k3.l","k3.u"),sep =" _ ") %>%
+                 unite("k4",c("k4.l","k4.u"),sep =" _ ") %>%
+                 unite("k5",c("k5.l","k5.u"),sep =" _ ") %>%
+                 unite("k6",c("k6.l","k6.u"),sep =" _ ") 
+
+
+
+
 rm(quant.interval.q,
    quant.interval.d2,
    quant.interval.d3,
