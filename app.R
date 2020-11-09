@@ -1366,94 +1366,101 @@ server <- function(input, output) {
       
     })
     
-
   output$cirplot <- renderPlot({
     
     
     if(input$Run2 == 0)
       return()
     isolate({
-    
-    data <- mean.reg[,c(2,24,3:9)]
-    
-    et <- input$red2
-    
-    dat. <- data.frame(
-      individual = data$Regione,
-      group = data$macro,
-      value = data[et]
-    )
-    
-    names(dat.) <- c("individual","group","value")
-    dat. = dat. %>% arrange(group,value)
-    
-    
-    
-    # empty bar e' una barra vuota che aggiunge spazio tra ogni gruppo
-    empty_bar <- 9
-    to_add <- data.frame( matrix(NA, empty_bar*nlevels(dat.$group), ncol(dat.)) )
-    colnames(to_add) <- colnames(dat.)
-    to_add$group <- rep(levels(dat.$group), each=empty_bar)
-    dat. <- rbind(dat., to_add)
-    dat. <- dat. %>% arrange(group)
-    dat.$id <- seq(1, nrow(dat.))
-    
-    # Ottieni nome e la posizione y di ogni etichetta
-    label_data <- dat.
-    number_of_bar <- nrow(label_data)
-    angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
-    label_data$hjust <- ifelse(angle < -90, 1, 0)
-    label_data$angle <- ifelse(angle < -90, angle+180, angle-33)
-    
-    # prepare a data frame for base lines
-    base_data <- dat. %>% 
-      group_by(group) %>% 
-      summarize(start=min(id), end=max(id) - empty_bar) %>% 
-      rowwise() %>% 
-      mutate(title=mean(c(start, end)))
-    
-    # prepare a data frame for grid (scales)
-    grid_data <- base_data
-    grid_data$end <- grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 3
-    grid_data$start <- grid_data$start - 3
-    grid_data <- grid_data[-1,]
-    
-    
-    mea <- mean(dat.$value, na.rm = TRUE)
-    sd <- sd(dat.$value, na.rm = TRUE)
-    
-    lev <- c(mea-3*sd, mea-2.3*sd, mea-1.5*sd, mea+0.5*sd)
-    
-    
-    # Make the plot
-    p <- ggplot(dat., aes(x=as.factor(id), y=value, fill=group )) +  # Note that id is a factor. If x is numeric, there is some space between the first bar
-      geom_col(aes(x = as.factor(id), y = value, fill = group), stat = "identity", alpha = 0.7) +
       
-      geom_segment(data=grid_data, aes(x = end, y = lev[4], xend = start, yend = lev[4]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
-      geom_segment(data=grid_data, aes(x = end, y = lev[3], xend = start, yend = lev[3]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
-      geom_segment(data=grid_data, aes(x = end, y = lev[2], xend = start, yend = lev[2]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
-      geom_segment(data=grid_data, aes(x = end, y = lev[1], xend = start, yend = lev[1]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
+      data <- mean.reg[,c(2,24,3:9)]
       
-      annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="black", size=5 , angle=0, fontface="bold", hjust=-0.8) +
+      et <- input$red2
+      
+      # Matrice che raccoglie i dati in base al reddito scelto dall'utente
+      dat. <- data.frame(
+        individual = data$Regione,
+        group = data$macro,
+        value = data[et]
+      )
+      
+      names(dat.) <- c("individual","group","value")
+      
+      dat. = dat. %>% arrange(group,value)
       
       
-      ylim(-1500,max(data[et])+2200) +
-      theme_minimal() +
-      theme(
-        legend.position = "none",
-        axis.text = element_blank(),
-        axis.title = element_blank(),
-        panel.grid = element_blank(),
-        plot.margin = unit(rep(-2,7), "cm") 
-      ) +
-      coord_polar() + 
-      geom_text(data=label_data, aes(x=id, y=value+60, label=individual, hjust=hjust), 
-                color="black", fontface="bold",alpha=0.9, size=5, angle= label_data$angle, inherit.aes = FALSE ) + 
       
-      geom_segment(data=base_data, aes(x = start, y = -5, xend = end, yend = -5), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  
-    
-    p
-    
+      # empty bar e' una barra vuota che aggiunge spazio tra ogni gruppo
+      #Creo dataframe vuoto con stessi nomi colonne di .dat
+      empty_bar <- 7
+      to_add <- data.frame( matrix(NA, empty_bar*nlevels(dat.$group), ncol(dat.)) )
+      colnames(to_add) <- colnames(dat.)
+      #Assegno valori a colonna
+      to_add$group <- rep(levels(dat.$group), each=empty_bar)
+      
+      dat. <- rbind(dat., to_add)
+      dat. <- dat. %>% arrange(group)
+      
+      dat.$id <- seq(1, nrow(dat.)) # Aggiungo altra colonna a .dat
+      
+      # Ottieni nome e la posizione y di ogni etichetta
+      label_data <- dat.
+      number_of_bar <- nrow(label_data)
+      angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+      label_data$hjust <- ifelse(angle < -90, 1, 0)
+      label_data$angle <- ifelse(angle < -90, angle+180, angle)
+      
+      # prepare a data frame for base lines
+      base_data <- dat. %>% 
+        group_by(group) %>% 
+        summarize(start=min(id), end=max(id) - empty_bar) %>% 
+        rowwise() %>% 
+        mutate(title=mean(c(start, end)))
+      
+      # prepare a data frame for grid (scales)
+      grid_data <- base_data
+      grid_data$end <- grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 1
+      grid_data$start <- grid_data$start -1
+      grid_data <- grid_data[-1,]
+      
+      
+      mea <- mean(dat.$value, na.rm = TRUE)
+      sd <- sd(dat.$value, na.rm = TRUE)
+      
+      lev <- c(mea-3*sd, mea-2.3*sd, mea-1.5*sd, mea+0.5*sd)
+      
+      
+      # Make the plot
+      p <- ggplot(dat., aes(x=as.factor(id), y=value, fill=group )) +  # Note that id is a factor. If x is numeric, there is some space between the first bar
+        geom_bar(aes(x = as.factor(id), y = value, fill = group), stat = "identity", alpha = 0.7) +
+        
+        geom_segment(data=grid_data, aes(x = end, y = lev[4], xend = start, yend = lev[4]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
+        geom_segment(data=grid_data, aes(x = end, y = lev[3], xend = start, yend = lev[3]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
+        geom_segment(data=grid_data, aes(x = end, y = lev[2], xend = start, yend = lev[2]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
+        geom_segment(data=grid_data, aes(x = end, y = lev[1], xend = start, yend = lev[1]), colour = "black", alpha=1, size=0.6 , inherit.aes = FALSE ) +
+        
+        annotate("text", x = rep(max(dat.$id),4), y = signif(lev,digits=6), label = as.character(signif(lev),digits=6) , color="black", size=4 , angle=0, fontface="bold", hjust=1) +
+        #geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.5) +
+        
+        #ylim(-0.3*lev[1],lev[4]) +
+        
+        theme_minimal() +
+        theme(
+          legend.position = "none",
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          panel.grid = element_blank(),
+          plot.margin = unit(rep(-1.5,4), "cm") 
+        ) +
+        coord_polar() + 
+        geom_text(data=label_data, aes(x=id, y=value+10, label=individual, hjust=hjust), 
+                  color="black", fontface="bold",alpha=0.6, size=3, angle= label_data$angle, inherit.aes = FALSE ) + 
+        
+        geom_segment(data=base_data, aes(x = start, y = -5, xend = end, yend = -5), colour = "black", alpha=0.8, size=1.3 , inherit.aes = FALSE )  
+      #geom_text(data=base_data, aes(x = title, y = -18, label=group), hjust=c(1,0,0), colour = "black", alpha=0.8, size=1.9, fontface="bold", inherit.aes = FALSE)
+      
+      p
+      
     })
     
     
