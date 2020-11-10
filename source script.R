@@ -614,6 +614,69 @@
     
   }
   
+  Moran.boot <- function(shape,x,wm,n.sim,alpha=0.05){
+    
+    n <- length(shape)
+    y <- shape[[etichette[x]]]
+    
+    ya <- array(NA, dim=c(length(OGR.prov),1,n.sim))
+    Morans <- NULL
+    # Ogni dimensione [,,i] dell'array contiene un ricampionamento
+    for (i in 1:n.sim){
+      
+      ya[,,i] <- y[sample(1:length(y), length(y), replace = TRUE)]
+      #y <- as.vector(y[,1, drop=TRUE])
+    }
+    #Calcolo moran index per n volte
+    for (i in 1:n.sim){
+      
+      y <- ya[,,i]
+      ybar <- mean(y, na.rm = TRUE)
+      
+      # Ora ci serve (yi - ybar)(yj - ybar)
+      
+      dy <- y - ybar # Scarto dalla media (vettore)
+      g <- expand.grid(dy, dy) # Combinazione del vettore
+      yiyj <- g[,1] * g[,2]
+      
+      pm <- matrix(yiyj, ncol = n) # Crea matrice da yiyj
+      
+      pmw <- pm * wm #pm * matrice dei pesi -> (yi - ybar)(yj - ybar)*wij
+      spwm <- sum(pmw) #Doppia sommatoria di -> (yi - ybar)(yj-ybar)*wij
+      smw <- sum(wm) #Somma dei pesi
+      sw <- spwm/smw #Doppia sommatoria "spwm" diviso somma dei pesi "smw"
+      vr <- n / sum(dy^2) # Prima parte della formula
+      
+      Morans[i] <- vr * sw
+    }
+    
+    #Creo intervallo di confidenza
+    sorted <- sort(Morans)
+    interval <- c(sorted[round(n.sim*alpha/2)],sorted[round(n.sim-n.sim*alpha/2)])
+    
+    m.list <- Moran.fun(shape,x,wm)
+    
+    #Intervallo basic-boot con differenze
+    delta.boot <- sort(Morans-m.list[[1]])
+    perc.delta <- c(delta.boot[round(n.sim*alpha/2)],delta.boot[round(n.sim-n.sim*alpha/2)])
+    
+    basic.interval <- c(m.list[[1]]-perc.delta[2],m.list[[1]]-perc.delta[1])
+    
+    invisible(base::list(
+      "Moran" = m.list[[1]],
+      "Expected" = mean(Morans),
+      "Variance" = sd(Morans)^2,
+      "Shape" = deparse(substitute(shape)),
+      "Variable" = etichette[x],
+      "Weight" = deparse(substitute(wm)),
+      "N.sim" = n.sim,
+      "Boot sample" = as.vector(Morans),
+      "Boot interval" = interval,
+      "Significance" = alpha,
+      "Basic boot" = basic.interval))
+    
+  }
+  
   print.boot <- function(boot.list, plot=FALSE){
     
     cat("\n")
@@ -627,7 +690,9 @@
     cat("Moran I statistic: ", boot.list[[1]], "\n") # cat fa un paste() degli argomenti in c("..","..","...")
     cat("Sample mean: ", boot.list[[2]], "\n") # \n significa a capo
     cat("Sample var: ", boot.list[[3]], "\n") 
-    cat("Bootstrap interval: ", boot.list[[9]], "\n")
+    cat("Percentile interval: ", boot.list[[9]], "\n")
+    cat("Basic-boot interval: ", boot.list[[11]], "\n")
+    
     
     if(plot == TRUE){
       
@@ -639,49 +704,6 @@
         geom_vline(aes(xintercept = boot.list[[9]][2]), color = "red", size = 1) 
       
       p
-      
-    }
-    
-  }
-  
-  print.moran <- function(moran.list, boot = FALSE, plot = FALSE) {
-    
-    if(boot == FALSE){
-      
-      cat("\n")
-      cat("                         Moran's I  \n")
-      cat("Shape: ", moran.list[[4]], "\n") # deparse(substitute(x)) serve a far leggere il nome dell'oggetto nell'environment
-      cat("Data: ", moran.list[[5]], "\n")                 
-      cat("Weights: ", moran.list[[6]], "\n") # senza deparse(sub(..)) e con wm solo,  avremmo avuto una stringa di 01011010001 poichè mostrava gli elementi
-      cat("\n")
-      cat("Moran I statistic: ", moran.list[[1]], "\n") # cat fa un paste() degli argomenti in c("..","..","...")
-      cat("Expected value: ", moran.list[[2]], "\n") # \n significa a capo
-      cat("Variance: ", moran.list[[3]], "\n") 
-      
-    } else {
-      
-      
-      cat("\n")
-      cat("           Moran I test under randomization      \n")
-      cat("Shape: ", moran.list[[4]], "\n") # deparse(substitute(x)) serve a far leggere il nome dell'oggetto nell'environment
-      cat("Data: ", moran.list[[5]], "\n")                 
-      cat("Weights: ", moran.list[[6]], "\n") # senza deparse(sub(..)) e con wm solo,  avremmo avuto una stringa di 01011010001 poichè mostrava gli elementi
-      cat("N.sim: ", moran.list[[7]], "\n")
-      cat("\n")
-      cat("Moran I statistic: ", moran.list[[1]], "\n") # cat fa un paste() degli argomenti in c("..","..","...")
-      cat("Expected value: ", moran.list[[2]], "\n") # \n significa a capo
-      cat("Variance: ", moran.list[[3]], "\n")
-      cat("Z-score: ", moran.list[[9]], "    p-value: ", moran.list[[10]], "\n")
-      
-      if(plot == TRUE){
-        a <- as.data.frame(moran.list[8])
-        
-        p <- ggplot(a, aes(x = Simulated)) + 
-          geom_histogram(color = "black", fill = "white", binwidth=0.003) +
-          geom_vline(aes(xintercept = moran.list[[1]]), color = "red", linetype = "dashed", size = 1)
-        
-        p
-      }
       
     }
     

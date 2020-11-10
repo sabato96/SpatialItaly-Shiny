@@ -85,7 +85,7 @@ shinyApp(
                    selectInput(inputId = "red7",
                                label = "Choose a variable to display",
                                choices = etichette,
-                               selected = "") ),
+                               selected = "Red. pens.") ),
                    
                    column(6,
                    selectInput(inputId = "red8",
@@ -220,20 +220,20 @@ ui <- fluidPage(
       
                         selectInput(inputId = "red2",
                               label = "Choose a variable for cir/viol plot",
-                              choices = etichette[1:7],
+                              choices = etichette[1:8],
                               selected = ""),
                         selectInput(inputId = "red33",
                               label = "Choose a variable for corr.",
-                              choices = etichette[1:7],
-                              selected = ""),
+                              choices = etichette[1:8],
+                              selected = "Red. pens."),
                         selectInput(inputId = "red34",
                               label = "Choose a variable for corr.",
-                              choices = etichette[1:7],
-                              selected = ""),
+                              choices = etichette[1:8],
+                              selected = "Red. lav. aut."),
                         selectInput(inputId = "red35",
-                              label = "Choose a variablefor corr.",
-                              choices = etichette[1:7],
-                              selected = ""),
+                              label = "Choose a variable for corr.",
+                              choices = etichette[1:8],
+                              selected = "Red. imponibile"),
                         
                         
                         selectInput(inputId = "palette3",
@@ -1164,7 +1164,9 @@ ui <- fluidPage(
              p <- ggplot(data = ams, aes(x=y, y= value)) + 
                geom_point() + geom_smooth(method = "lm", color = "black") +
                geom_hline(yintercept=mean(ams[,2]), linetype="dashed", color = "red") +
-               geom_vline(xintercept = ybar, linetype="dashed", color = "red")
+               geom_vline(xintercept = ybar, linetype="dashed", color = "red") +
+               ylab("Reddito medio locale") +
+               xlab("Reddito")
              
              #p <- plotly(p)
              ggplotly(p)
@@ -1380,13 +1382,13 @@ Moran.boot <- function(shape,x,wm,n.sim,alpha=0.05){
     
     ya <- array(NA, dim=c(length(OGR.prov),1,n.sim))
     Morans <- NULL
-    
+    # Ogni dimensione [,,i] dell'array contiene un ricampionamento
     for (i in 1:n.sim){
       
       ya[,,i] <- y[sample(1:length(y), length(y), replace = TRUE)]
       #y <- as.vector(y[,1, drop=TRUE])
     }
-    
+    #Calcolo moran index per n volte
     for (i in 1:n.sim){
       
       y <- ya[,,i]
@@ -1409,10 +1411,17 @@ Moran.boot <- function(shape,x,wm,n.sim,alpha=0.05){
       Morans[i] <- vr * sw
     }
     
+    #Creo intervallo di confidenza
     sorted <- sort(Morans)
     interval <- c(sorted[round(n.sim*alpha/2)],sorted[round(n.sim-n.sim*alpha/2)])
-    
+  
     m.list <- Moran.fun(shape,x,wm)
+    
+    #Intervallo basic-boot con differenze
+    delta.boot <- sort(Morans-m.list[[1]])
+    perc.delta <- c(delta.boot[round(n.sim*alpha/2)],delta.boot[round(n.sim-n.sim*alpha/2)])
+    
+    basic.interval <- c(m.list[[1]]-perc.delta[2],m.list[[1]]-perc.delta[1])
     
     invisible(base::list(
       "Moran" = m.list[[1]],
@@ -1424,7 +1433,8 @@ Moran.boot <- function(shape,x,wm,n.sim,alpha=0.05){
       "N.sim" = n.sim,
       "Boot sample" = as.vector(Morans),
       "Boot interval" = interval,
-      "Significance" = alpha))
+      "Significance" = alpha,
+      "Basic boot" = basic.interval))
     
   }
   
@@ -1441,7 +1451,9 @@ print.boot <- function(boot.list, plot=FALSE){
     cat("Moran I statistic: ", boot.list[[1]], "\n") # cat fa un paste() degli argomenti in c("..","..","...")
     cat("Sample mean: ", boot.list[[2]], "\n") # \n significa a capo
     cat("Sample var: ", boot.list[[3]], "\n") 
-    cat("Bootstrap interval: ", boot.list[[9]], "\n")
+    cat("Percentile interval: ", boot.list[[9]], "\n")
+    cat("Basic-boot interval: ", boot.list[[11]], "\n")
+    
     
     if(plot == TRUE){
       

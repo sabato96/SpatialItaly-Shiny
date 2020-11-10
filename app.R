@@ -101,7 +101,7 @@ ui <- dashboardPage(
                    selectInput(inputId = "red7",
                                label = "Choose a variable to display",
                                choices = etichette,
-                               selected = "") ),
+                               selected = "Red. pens.") ),
                    
                    column(6,
                    selectInput(inputId = "red8",
@@ -734,9 +734,10 @@ server <- function(input, output) {
                xlim(c(min(y)-mean(y),max(y)+mean(y))) +
                geom_point() + geom_smooth(method = "lm", color = "black") +
                geom_hline(yintercept=mean(ams[,2]), linetype="dashed", color = "red") +
-               geom_vline(xintercept = ybar, linetype="dashed", color = "red") 
+               geom_vline(xintercept = ybar, linetype="dashed", color = "red") +
+               ylab("Reddito medio locale") +
+               xlab("Reddito")
                
-             
              
            
              #p <- plotly(p)
