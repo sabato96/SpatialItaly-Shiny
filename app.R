@@ -1,7 +1,7 @@
 #################################################################################
-# Progetto Lab. DISES 2020            Studio spaziale sul dataset redditi_com   #
+#                                     Studio spaziale sul dataset redditi_com   #
 #                                                                               #
-# Gargiulo Sabato & Manzo Maria                                                 #
+#                                                                               #
 #                                                                               #
 #################################################################################
 
