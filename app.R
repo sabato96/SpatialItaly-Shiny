@@ -1,7 +1,7 @@
 #################################################################################
-#                                     Studio spaziale sul dataset redditi_com   #
+# Progetto Lab. DISES 2020            Studio spaziale sul dataset redditi_com   #
 #                                                                               #
-#                                                                               #
+# Gargiulo Sabato & Manzo Maria                                                 #
 #                                                                               #
 #################################################################################
 
@@ -48,7 +48,7 @@ library(magrittr)
 ########
 
 
-
+# UI serve a definire l'interfaccia grafica
   
 ui <- dashboardPage(
   dashboardHeader(title = "Shiny Project"),
@@ -81,6 +81,11 @@ ui <- dashboardPage(
 
   
   # Dashboard body dice a shiny cosa far vedere in base al menu scelto dall'utente
+  
+  # Il codice di cui sotto serve a creare gli elementi che andranno a comporre ogni singola
+  # scheda presente alla sinistra dell'app e i relativi elementi da visualizzare
+  
+
   dashboardBody(
 
     tabItems(
@@ -573,7 +578,7 @@ server <- function(input, output) {
       
       tmap_leaflet(tm) 
       
-    }) })
+    }) }) #Grafico interattivo per province
   
   
   output$qtm.local <- renderLeaflet({
@@ -643,7 +648,7 @@ server <- function(input, output) {
       
       tmap_leaflet(tm) 
       
-    }) })
+    }) }) #Grafico iterattivo per comuni
   
   
   # output$qtm.plot <- renderPlot({
@@ -667,6 +672,9 @@ server <- function(input, output) {
   #   }) })
 
 
+  
+  #################################################
+  # Moran Scatterplot 
   output$moran <- renderPlotly({
     
       if(input$Run5 == 0)
@@ -744,7 +752,7 @@ server <- function(input, output) {
              ggplotly(p)
              
     
-        }) })
+        }) }) #Plot
     
   output$moran.text <- renderPrint({
       
@@ -797,30 +805,13 @@ server <- function(input, output) {
       
       print.moran(Moran.I)
 
-    }) })
-    
-
- # output$vario <- renderPlot({
-    
-    # if(input$Run5 == 0)
-    #   return()
-    # isolate({
-    #   
-    # 
-    #   
-    #   z <- input$red5
-    #   y <- OGR.prov@data[[z]]
-    #   xx <- as.data.frame(cbind(xy.prov,y))
-    #   names(xx) <- c("x","y",z)
-    #   coordinates(xx) = ~x+y
-    #   
-    #   var <- variogram(log(y)~1, xx, cloud = TRUE)
-    #   plot(var)
-    #   
-    #   
-    # }) #})
+    }) }) #Testo
+  #################################################
   
-
+  
+  
+  #################################################
+  # Permutation test
   
   output$perm <- renderPlotly({
       
@@ -897,9 +888,8 @@ server <- function(input, output) {
              #                  S0=Szero(ww.prov) )
              # plot(moran.mboot)
     
-    }) })
+    }) }) #Plot
 
-      
   output$perm.text <- renderPrint({
       
       
@@ -974,17 +964,22 @@ server <- function(input, output) {
         #                   S0=Szero(ww.prov) )
         # print(moran.mboot)
         
-      }) })
+      }) }) #Testo
+  #################################################
   
   
-  output$bootstr <- renderPlotly({
+  
+  #################################################
+  #Bootstrap classico
+  
+  boot.data <- reactive({
     
     
     if(input$Run19 == 0)
       return()
     isolate({
-    
-    
+      
+      
       
       OGR.prov.sub <- OGR.prov[]
       OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
@@ -1028,16 +1023,25 @@ server <- function(input, output) {
       
       
       M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, alpha = input$sign)
+    
       
+      return(M.boot)
       
-      print.boot(M.boot,plot=TRUE)
+  }) }) #Reactive content per creare lista con dati sulla simulazione
+  
+  
+  output$bootstr <- renderPlotly({
+    
+    if(input$Run19 == 0)
+      return()
+    isolate({
+
+      a <- boot.data()
       
-      
+      print.boot(a,plot=TRUE)
       
     
-    
-    
-  }) })
+  }) }) #Plot
   
   output$bootstr.text <- renderPrint({
     
@@ -1047,56 +1051,18 @@ server <- function(input, output) {
     isolate({
       
       
+      b <- boot.data()
       
-      OGR.prov.sub <- OGR.prov[]
-      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
-      xy.sub <- coordinates(OGR.prov.sub)
-      
-      ### Adicenze
-      
-      #Metodo semplice QUEEN
-      
-      
-      if(input$method19 == "Queen"){
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-      }
-      
-      
-      
-      if(input$method19 == "Nearest"){
-        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      #Metodo distance based
-      if (input$method19 == "Distance"){
-        
-        
-        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
-                             row.names = OGR.prov.sub@data$seq)
-        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      
-      z <- input$red19
-      zz <- input$n.sim19
-      
-      
-      M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, input$sign)
-      
-      
-      print.boot(M.boot)
+      print.boot(b)
     
-  }) })
+  }) }) #Testo
+  #################################################
   
-  output$blockplot <- renderPlotly({
+  
+  #################################################
+  # Bootstrap a blocchi
+  
+  block.data <- reactive({
     
     
     if(input$Run20 == 0)
@@ -1148,15 +1114,26 @@ server <- function(input, output) {
       
       M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign20)
       
+      return(M.boot)
+    
+    
+    
+    
+    
+  }) }) #Reactive content per creare lista con dati sulla simulazione
+  
+  output$blockplot <- renderPlotly({
+    
+    
+    if(input$Run20 == 0)
+      return()
+    isolate({
+
+      a <- block.data()
       
-      block.print(M.boot,plot=TRUE)
-      
-      
-      
-      
-      
-      
-    }) })
+      block.print(a,plot = TRUE)
+
+    }) }) #Plot
   
   output$blocktext <- renderPrint({
     
@@ -1165,60 +1142,14 @@ server <- function(input, output) {
       return()
     isolate({
       
+      b <- block.data()
       
+      block.print(b)
+
       
-      OGR.prov.sub <- OGR.prov[]
-      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
-      xy.sub <- coordinates(OGR.prov.sub)
-      
-      ### Adicenze
-      
-      #Metodo semplice QUEEN
-      
-      
-      if(input$method20 == "Queen"){
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-      }
-      
-      
-      
-      if(input$method20 == "Nearest"){
-        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k20, RANN=FALSE),row.names = OGR.prov.sub$seq)
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      #Metodo distance based
-      if (input$method20 == "Distance"){
-        
-        
-        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance20 * max(dsts.com),  
-                             row.names = OGR.prov.sub@data$seq)
-        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      
-      z <- input$red20
-      zz <- input$n.sim20
-      
-      
-      M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign20)
-      
-      
-      block.print(M.boot)
-      
-      
-      
-      
-      
-      
-    }) })
+    }) }) #Testo
+  #################################################
+  
   
 
   output$table <- DT::renderDataTable({ 
@@ -1229,7 +1160,7 @@ server <- function(input, output) {
       datatable(a[,-4], filter = "top", options = list(scrollX = TRUE, target = "column") ) 
       
       
-      }) 
+      }) #Render della tabella con tutti i dati
     
   output$scatter <- renderPlotly({
     
@@ -1252,7 +1183,7 @@ server <- function(input, output) {
     ggplotly(b, tooltip = c("x","y","comune"))
    
     
-  })  
+  })  #Render scatterplot
   
   output$barplot <- renderPlotly({
     
@@ -1284,7 +1215,7 @@ server <- function(input, output) {
     #ggplotly(c, tooltip = c(x,"macro"))
     
     
-  })  
+  })  #Render barplot
 
   output$corr <- renderPlot({
     
@@ -1310,7 +1241,7 @@ server <- function(input, output) {
       
       
     }) 
-    })
+    }) #Render correlogramma
   
   output$violinplot <- renderPlotly({
       
@@ -1365,7 +1296,7 @@ server <- function(input, output) {
       })
       
       
-    })
+    }) #Render violinplot
     
   output$cirplot <- renderPlot({
     
@@ -1466,7 +1397,7 @@ server <- function(input, output) {
     
     
     
-  })
+  }) #Render circle-plot
   
 
     

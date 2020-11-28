@@ -1790,14 +1790,14 @@ ui <- fluidPage(
 
   server <- function(input,output) {
   
-  output$bootstr <- renderPlotly({
+  boot.data <- reactive({
     
     
     if(input$Run19 == 0)
       return()
     isolate({
-    
-    
+      
+      
       
       OGR.prov.sub <- OGR.prov[]
       OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
@@ -1841,14 +1841,23 @@ ui <- fluidPage(
       
       
       M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, alpha = input$sign)
-      
-      
-      print.boot(M.boot,plot=TRUE)
-      
-      
-      
     
+      
+      return(M.boot)
+      
+  }) })
+  
+  
+  output$bootstr <- renderPlotly({
     
+    if(input$Run19 == 0)
+      return()
+    isolate({
+
+      a <- boot.data()
+      
+      print.boot(a,plot=TRUE)
+      
     
   }) })
   
@@ -1860,57 +1869,15 @@ ui <- fluidPage(
     isolate({
       
       
+      b <- boot.data()
       
-      OGR.prov.sub <- OGR.prov[]
-      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
-      xy.sub <- coordinates(OGR.prov.sub)
-      
-      ### Adicenze
-      
-      #Metodo semplice QUEEN
-      
-      
-      if(input$method19 == "Queen"){
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-      }
-      
-      
-      
-      if(input$method19 == "Nearest"){
-        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      #Metodo distance based
-      if (input$method19 == "Distance"){
-        
-        
-        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
-                             row.names = OGR.prov.sub@data$seq)
-        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      
-      z <- input$red19
-      zz <- input$n.sim19
-      
-      
-      M.boot <- Moran.boot(OGR.prov, which(etichette == z), wm.prov, zz, input$sign)
-      
-      
-      print.boot(M.boot)
+      print.boot(b)
     
   }) })
+
   
   
-  output$blockboot <- renderPlotly({
+  block.data <- reactive({
     
     
     if(input$Run20 == 0)
@@ -1962,14 +1929,25 @@ ui <- fluidPage(
       
       M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign)
       
+      return(M.boot)
+    
+    
+    
+    
+    
+  }) })
+  
+  output$blockboot <- renderPlotly({
+    
+    
+    if(input$Run20 == 0)
+      return()
+    isolate({
+
+      a <- block.data()
       
-      block.print(M.boot,plot=TRUE)
-      
-      
-      
-      
-      
-      
+      block.print(a,plot = TRUE)
+
     }) })
   
   output$blockboot.text <- renderPrint({
@@ -1979,61 +1957,14 @@ ui <- fluidPage(
       return()
     isolate({
       
+      b <- block.data()
       
-      
-      OGR.prov.sub <- OGR.prov[]
-      OGR.prov.sub@data$seq <- seq(1:length(OGR.prov.sub))
-      xy.sub <- coordinates(OGR.prov.sub)
-      
-      ### Adicenze
-      
-      #Metodo semplice QUEEN
-      
-      
-      if(input$method19 == "Queen"){
-        wr.sub <- poly2nb(OGR.prov.sub, row.names = OGR.prov.sub$seq, queen = TRUE )
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        
-      }
-      
-      
-      
-      if(input$method19 == "Nearest"){
-        wr.sub <- knn2nb(knearneigh(xy.sub,k=input$k19, RANN=FALSE),row.names = OGR.prov.sub$seq)
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      #Metodo distance based
-      if (input$method19 == "Distance"){
-        
-        
-        wr.sub <- dnearneigh(xy.sub, d1 = 0, d2 = input$distance19 * max(dsts.com),  
-                             row.names = OGR.prov.sub@data$seq)
-        dsts.sub <- unlist(nbdists(wr.sub,xy.sub))
-        wm.prov <- nb2mat(wr.sub, style = "B", zero.policy = TRUE)
-        wm.prov <- (1/2)*(wm.prov+t(wm.prov))
-      }
-      
-      
-      
-      z <- input$red19
-      zz <- input$n.sim19
-      
-      
-      M.boot <- block.boot(which(etichette == z), wm.prov, zz, alpha = input$sign)
-      
-      
-      block.print(M.boot)
-      
-      
-      
-      
-      
+      block.print(b)
+
       
     }) })
-
+  
+  
 },
 
 options = list(height = 1200)
