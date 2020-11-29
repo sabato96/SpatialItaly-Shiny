@@ -199,46 +199,49 @@ ui <- dashboardPage(
       tabItem(tabName = "Corr",
         #####
         
-            sidebarLayout(
+            fluidPage(
           
-              sidebarPanel(
+              fluidRow(
             
-            
+            column(2,
                 selectInput(inputId = "red10",
                             label = "Choose a variable to display",
                             choices = etichette,
-                            selected = ""),
-            
+                            selected = "Red. da fabbricati")),
+            column(2,
                 selectInput(inputId = "red11",
                             label = "Choose a variable to display",
                             choices = etichette,
-                            selected = ""),
-            
+                            selected = "Red. pens.")),
+            column(2,
                 selectInput(inputId = "red12",
                             label = "Choose a variable to display",
                             choices = etichette,
-                            selected = ""),
-            
+                            selected = "Red. lav. aut.")),
+            column(2,
                 selectInput(inputId = "red13",
                             label = "Choose a variable to display",
                             choices = etichette,
-                            selected = ""),
+                            selected = "Red. imponibile")),
             
             
             
             #checkboxInput("check", label = "Interactive plot", value = FALSE),
             
-                actionButton("Run10", "Run code")
+                column(4,actionButton("Run10", "Run code")),
+            
+            
+            plotOutput("corr", width = "100%",height = 700),
             
             
           ),
           
           # Show a plot of the generated distribution
-          mainPanel(
+          
             
-            plotOutput("corr", width = "100%"),
             
-          ))), 
+            
+          )), 
 #####
       
       tabItem(tabName = "leafletglobal",
@@ -415,7 +418,7 @@ fluidPage(
               
               numericInput(inputId = "n.sim",
                            label = ("Choose n iteration"),
-                           value = "20"),
+                           value = "2000"),
               
               actionButton("Run6", "Run code")
                   
@@ -468,7 +471,7 @@ tabItem(tabName = "bootstr",
             
             numericInput(inputId = "n.sim19",
                          label = ("Choose n iteration"),
-                         value = "20"),
+                         value = "2000"),
             
             actionButton("Run19", "Run code")
             
@@ -520,7 +523,7 @@ tabItem(tabName = "blockbootstrap",
             
             numericInput(inputId = "n.sim20",
                          label = ("Choose n iteration"),
-                         value = "20"),
+                         value = "2000"),
             
             actionButton("Run20", "Run code")
             
@@ -638,9 +641,11 @@ server <- function(input, output) {
       
       tmap_leaflet(tm) 
       
-    }) }) #Grafico iterattivo per comuni
+    }) }) #Grafico interattivo per comuni
   
   
+  
+  # Codice per ottenere mappa NON INTERATTIVA
   # output$qtm.plot <- renderPlot({
   #   
   #   if(input$Run1 == 0)
