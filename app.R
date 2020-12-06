@@ -674,6 +674,7 @@ server <- function(input, output) {
     
       if(input$Run5 == 0)
         return()
+    
       isolate({
       
         #Scelta criterio adiacenze
@@ -1231,7 +1232,8 @@ server <- function(input, output) {
       
       
       d<- ggpairs(y,columns= 1:(ncol(y)-1),
-                  ggplot2::aes(colour=macro, alpha=.3, width=.2 )) 
+                  ggplot2::aes(colour=macro, alpha=.3, width=.2 ),
+                  upper = list(continuous = wrap("cor", method="spearman"))) 
       d 
       
       
