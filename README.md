@@ -9,18 +9,7 @@ Questo lavoro si pone l’obiettivo di studiare la distribuzione spaziale delle 
 
 Lo studio procederà per gradi. In primis verranno analizzati i dati dal punto di vista descrittivo per identificare le propietà statistiche delle variabili considerate e quindi procedere ad una trattazione efficace. Successivamente verranno gettate le basi teoriche dell'analisi spaziale descrivendo minuziosamente il framework utilizzato per l'analisi.
 
-
-Il file .RData necessario al funzionamento dell' "app.R" è scaricabile al seguente link:
-Scaricare tutto il file .zip da Google Drive e poi estrarre il file .RData nella cartella del progetto.
-
-https://drive.google.com/file/d/11S8tJoGRcrsCs4Sh5T3_e6PLnnvrKNuO/view?usp=sharing
-
-PROGETTO LABORATORIO DATA MINING (MANZO M. & GARGIULO S.)
-
-Traccia n.2 Anno 2019 (Dataset Redditi_comuni.csv)
-
-Analisi della distribuzione spaziale per le varie tipologie di redditi.
-
+DOWNLOAD COMPLETO: https://drive.google.com/file/d/1O8YBXTwrRaG_N9HHmvsJJJG-nsmzg198/view?usp=sharing
 
 PROCEDIMENTO:
 
@@ -33,7 +22,7 @@ IMPORTANTE!! SE RSTUDIO CHIEDE DI INSTALLARE I PACCHETTI MANCANTI, PROCEDERE ALL
 In questo modo verrà caricato l'environment in Rstudio
 4. Una volta caricato, aprire e lanciare app.R per l'applicazione oppure "progetto markdown" per il file markdown.
 
-DOWNLOAD COMPLETO: https://drive.google.com/file/d/1O8YBXTwrRaG_N9HHmvsJJJG-nsmzg198/view?usp=sharing
+
 
 #####
 Il file ProgettoLab.rar contiene:
