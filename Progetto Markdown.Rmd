@@ -930,7 +930,7 @@ L’I di Moran è calcolato come segue:
 $$
 \begin{equation}
 \textbf{I} = \Bigg[ 
-\frac{1}{\sum_{i=1}^{n} {(y_{i}-\bar{y})}^2 } 
+\frac{n}{\sum_{i=1}^{n} {(y_{i}-\bar{y})}^2 } 
 \Bigg] 
 \Bigg[  
 \frac{\sum_{i=1}^{n}\sum_{j=1}^{n}w_{ij}(y_{i}-\bar{y})(y_{j}-\bar{y})}   
