@@ -32,7 +32,7 @@
   library(shiny)
   library(shinydashboard)
   library(magrittr)
-  ggmap::register_google(key="AIzaSyCCCEngniuORKmDvGus4ppsJ7oksOjKrWU")
+  
   
 ######
 
